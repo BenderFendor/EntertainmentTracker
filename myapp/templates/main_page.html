@@ -1,0 +1,48 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Entertainment Tracker</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'styles.css' %}">
+</head>
+<body>
+    <header>
+        <h1>Welcome to Entertainment Tracker</h1>
+        <nav>
+            <ul>
+                <li><a href="{% url 'account' %}">Create Account / Login</a></li>
+                <li><a href="(% url 'books' %}">Books</a></li>
+                <li><a href="{% url 'shows' %}">Shows</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <section>
+            <h2>About Entertainment Tracker</h2>
+            <p>
+                Entertainment Tracker helps you keep track of your favorite books, movies, and shows.
+                Discover new recommendations based on your interests and connect with a community of enthusiasts.
+            </p>
+        </section>
+        <section>
+            <h2>Features</h2>
+            <ul>
+                <li>Track your reading and viewing history</li>
+                <li>Get personalized recommendations</li>
+                <li>Write and read reviews</li>
+                <li>Connect with friends and share experiences</li>
+            </ul>
+        </section>
+        <section>
+            <h2>How It Works</h2>
+            <p>
+                Entertainment Tracker allows you to track and review your favorite books, movies, and shows. Create an account to start building your personal entertainment library and receive personalized recommendations.
+            </p>
+            <a href="{% url 'create_account' %}" class="btn">Create Account</a>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2023 Entertainment Tracker</p>
+    </footer>
+</body>
+</html>

@@ -1,1 +1,4 @@
+.env
 password.txt
+myapp/__pycache__/
+myapp/migrations/
