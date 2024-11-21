@@ -1,4 +1,3 @@
-
-# ...existing packages...
 requests
 boto3
+python-dotenv
