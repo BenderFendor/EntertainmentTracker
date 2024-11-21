@@ -3,3 +3,7 @@ password.txt
 myapp/__pycache__/
 myapp/migrations/
 enterainmentdjango/__pycache__/
+api.json
+db.sqlite3
+*.pyc
+__pycache__/

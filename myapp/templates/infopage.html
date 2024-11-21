@@ -7,24 +7,118 @@
 </head>
 <body>
     <header>
-        <h1>{{ movie.title }} ({{ movie.release_date|slice:":4" }})</h1>
-        <nav>
-            <ul>
-                <li><a href="{% url 'main_page' %}">Home</a></li>
-                <li><a href="{% url 'shows' %}">Back to Shows</a></li>
-            </ul>
-        </nav>
+        <div class="header-content">
+            <h1>{{ movie.title }} ({{ movie.release_date|slice:":4" }})</h1>
+            <nav>
+                <ul>
+                    <li><a href="{% url 'main_page' %}">Home</a></li>
+                    <li><a href="{% url 'shows' %}">Back to Shows</a></li>
+                </ul>
+            </nav>
+        </div>
     </header>
     <main>
-        <div class="movie-detail-card">
-            <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" alt="{{ movie.title }} Poster" class="movie-poster">
-            <div class="movie-info">
-                <p><strong>Overview:</strong> {{ movie.overview }}</p>
-                <p><strong>Release Date:</strong> {{ movie.release_date }}</p>
-                <p><strong>Rating:</strong> {{ movie.vote_average }}/10</p>
-                <button>Add to Watchlist</button>
+        <div class="info-page-container">
+            <!-- Overview Section -->
+            <div class="info-grid">
+                <div class="info-card poster-card">
+                    <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" alt="{{ movie.title }} Poster" class="movie-poster">
+                    <button class="add-to-watchlist-large">Add to Watchlist</button>
+                </div>
+
+                <div class="info-card details-card">
+                    <div class="movie-metadata">
+                        <span class="rating">⭐ {{ movie.vote_average|floatformat:1 }}/10</span>
+                        <span class="runtime">⏱ {{ movie.runtime }} min</span>
+                        <span class="year">📅 {{ movie.release_date|slice:":4" }}</span>
+                    </div>
+                    
+                    <div class="genres">
+                        {% for genre in genres %}
+                            <span class="genre-tag">{{ genre }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <h3>Overview</h3>
+                    <p>{{ movie.overview }}</p>
+                </div>
+            </div>
+
+            <!-- Combined Credits and Similar Movies Card -->
+            <div class="info-card combined-card">
+                <div class="section-tabs">
+                    <button class="tab-btn active" data-tab="directors">Directors</button>
+                    <button class="tab-btn" data-tab="cast">Cast</button>
+                    <button class="tab-btn" data-tab="similar">Similar Movies</button>
+                </div>
+
+                <div class="tab-content">
+                    <div class="tab-pane active" id="directors">
+                        <div class="credits-grid">
+                            {% for director in directors %}
+                                <div class="credit-card">
+                                    {% if director.profile_path %}
+                                        <img src="https://image.tmdb.org/t/p/w185{{ director.profile_path }}" alt="{{ director.name }}">
+                                    {% else %}
+                                        <div class="no-photo">No Photo</div>
+                                    {% endif %}
+                                    <div class="credit-info">
+                                        <span class="name">{{ director.name }}</span>
+                                        <span class="role">Director</span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="tab-pane" id="cast">
+                        <div class="credits-grid">
+                            {% for actor in cast %}
+                                <div class="credit-card">
+                                    {% if actor.profile_path %}
+                                        <img src="https://image.tmdb.org/t/p/w185{{ actor.profile_path }}" alt="{{ actor.name }}">
+                                    {% else %}
+                                        <div class="no-photo">No Photo</div>
+                                    {% endif %}
+                                    <div class="credit-info">
+                                        <span class="name">{{ actor.name }}</span>
+                                        <span class="role">as {{ actor.character }}</span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="tab-pane" id="similar">
+                        <div class="movie-list">
+                            {% for similar in similar_movies %}
+                                <div class="movie-item">
+                                    <div class="movie-image-container">
+                                        <button class="add-to-watchlist" title="Add to Watchlist">+</button>
+                                        <img src="https://image.tmdb.org/t/p/w500{{ similar.poster_path }}" alt="{{ similar.title }}">
+                                    </div>
+                                    <h2>{{ similar.title }}</h2>
+                                    <a href="{% url 'movie_detail' similar.id %}" class="more-info-btn">More info</a>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
+    <script>
+        document.querySelectorAll('.tab-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons and panes
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+                
+                // Add active class to clicked button and corresponding pane
+                button.classList.add('active');
+                document.getElementById(button.dataset.tab).classList.add('active');
+            });
+        });
+    </script>
 </body>
 </html>

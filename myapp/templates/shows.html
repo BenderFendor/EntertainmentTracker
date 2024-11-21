@@ -11,14 +11,40 @@
 </head>
 <body>
     <header>
-        <h1>Shows</h1>
-        <nav>
-            <ul>
-                <li><a href="{% url 'account' %}">Create Account / Login</a></li>
-                <li><a href="{% url 'books' %}">Books</a></li>
-                <li><a href="{% url 'shows' %}">Shows</a></li>
-            </ul>
-        </nav>
+        <div class="header-content">
+            <div class="title-menu-container">
+                >
+                <div class="hamburger-menu">
+                    <h1>Shows</h1
+                    <input type="checkbox" id="menu-toggle">
+                    <label for="menu-toggle" class="menu-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </label>
+                    <div class="dropdown-menu">
+                        <ul>
+                            <li><a href="{% url 'shows' %}?category=popular">Popular Shows</a></li>
+                            <li><a href="{% url 'shows' %}?category=top_rated">Top Rated</a></li>
+                            <li class="divider"></li>
+                            <li>Genres</li>
+                            <li><a href="{% url 'shows' %}?genre=action">Action</a></li>
+                            <li><a href="{% url 'shows' %}?genre=comedy">Comedy</a></li>
+                            <li><a href="{% url 'shows' %}?genre=drama">Drama</a></li>
+                            <li><a href="{% url 'shows' %}?genre=sci-fi">Sci-Fi</a></li>
+                            <!-- Add more genres as needed -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="{% url 'account' %}">Create Account / Login</a></li>
+                    <li><a href="{% url 'books' %}">Books</a></li>
+                    <li><a href="{% url 'shows' %}">Shows</a></li>
+                </ul>
+            </nav>
+        </div>
     </header>
     <main>
         <div class="searchbar">
@@ -28,17 +54,22 @@
             </form>
         </div>
         <div class="shows-container">
-            <h1>{% if query %}Search Results{% else %}Popular Shows{% endif %}</h1>
-            <p>{% if query %}Results for "{{ query }}"{% else %}Discover the latest and most popular shows to watch.{% endif %}</p>
+            <h1>{% if query %}Search Results{% else %}{{ description }}{% endif %}</h1>
+            <p>{% if query %}Results for "{{ query }}"{% else %}Discover the latest and most {{ description|lower }} to watch.{% endif %}</p>
             <div class="movie-list">
                 {% for movie in movies %}
                     <div class="movie-item">
-                        <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" alt="{{ movie.title }} Poster">
-                        <h2>{{ movie.title }} ({{ movie.release_date|slice:":4" }})</h2>
-                        <div class="movie-buttons">
-                            <button class="btn">Add to Watchlist</button>
-                            <a href="{% url 'movie_detail' movie.id %}" class="btn">More info</a>
+                        <div class="movie-image-container">
+                            <button class="add-to-watchlist" title="Add to Watchlist">+</button>
+                            
+                            {% if movie.poster_path %}
+                                <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" alt="{{ movie.title }} Poster">
+                            {% else %}
+                                <img src="{% static 'noimage.jpg' %}" alt="No Image Available">
+                            {% endif %}
                         </div>
+                        <h2>{{ movie.title }} ({{ movie.release_date|slice:":4" }})</h2>
+                        <a href="{% url 'movie_detail' movie.id %}" class="more-info-btn">More info</a>
                     </div>
                 {% endfor %}
             </div>

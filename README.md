@@ -49,11 +49,6 @@
     python manage.py migrate
     ```
 
-3. **Create a superuser (optional):**
-    ```bash
-    python manage.py createsuperuser
-    ```
-
 ### Running the Application
 
 1. **Start the development server:**

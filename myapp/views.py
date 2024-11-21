@@ -12,39 +12,83 @@ def books(request):
 
 def shows(request):
     query = request.GET.get('query', '')
+    category = request.GET.get('category', 'popular')
+    genre = request.GET.get('genre', '')
+
     api_key = settings.TMDB_API_KEY
     headers = {
         "accept": "application/json",
         "Authorization": f"Bearer {api_key}"
     }
+
     if query:
-        url = f"https://api.themoviedb.org/3/search/movie?query={query}&language=en-US&page=1"
+        url = "https://api.themoviedb.org/3/search/movie"
+        params = {'language': 'en-US', 'query': query}
+        description = f'Results for "{query}"'
+    elif genre:
+        genre_id = get_genre_id(genre)
+        url = "https://api.themoviedb.org/3/discover/movie"
+        params = {'language': 'en-US', 'with_genres': genre_id}
+        description = f'Shows in the "{genre.capitalize()}" genre'
     else:
-        url = "https://api.themoviedb.org/3/movie/popular?language=en-US&page=1"
-    
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        data = response.json()
-        movies = data.get('results', [])[:20]  # Get the first 20 movies
-    else:
-        movies = []
-        # Optionally, handle the error or display a message
-    return render(request, 'shows.html', {'movies': movies, 'query': query})
+        if category == 'top_rated':
+            url = "https://api.themoviedb.org/3/movie/top_rated"
+            description = "Top Rated Shows"
+        else:  # Default to 'popular'
+            url = "https://api.themoviedb.org/3/movie/popular"
+            description = "Popular Shows"
+        params = {'language': 'en-US'}
+
+    response = requests.get(url, headers=headers, params=params)
+    data = response.json()
+    movies = data.get('results', [])
+
+    context = {
+        'movies': movies,
+        'query': query,
+        'category': category,
+        'description': description
+    }
+    return render(request, 'shows.html', context)
 
 def movie_detail(request, movie_id):
     api_key = settings.TMDB_API_KEY
-    url = f"https://api.themoviedb.org/3/movie/{movie_id}?language=en-US"
     headers = {
         "accept": "application/json",
         "Authorization": f"Bearer {api_key}"
     }
-    response = requests.get(url, headers=headers)
+    
+    # Get movie details
+    movie_url = f"https://api.themoviedb.org/3/movie/{movie_id}?language=en-US&append_to_response=credits,videos,similar"
+    response = requests.get(movie_url, headers=headers)
+    
     if response.status_code == 200:
         movie = response.json()
+        
+        # Process credits data
+        credits = movie.get('credits', {})
+        
+        # Get director
+        directors = [crew for crew in credits.get('crew', []) if crew['job'] == 'Director']
+        
+        # Get main cast (limit to top 6)
+        cast = credits.get('cast', [])[:6]
+        
+        # Format genres
+        genres = [genre['name'] for genre in movie.get('genres', [])]
+        
+        context = {
+            'movie': movie,
+            'directors': directors,
+            'cast': cast,
+            'genres': genres,
+            'similar_movies': movie.get('similar', {}).get('results', [])[:4]
+        }
     else:
-        movie = {}
+        context = {}
         messages.error(request, 'Failed to retrieve movie details.')
-    return render(request, 'infopage.html', {'movie': movie})
+    
+    return render(request, 'infopage.html', context)
 
 def account(request):
     return render(request, 'account.html')
