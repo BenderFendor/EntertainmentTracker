@@ -11,4 +11,5 @@ urlpatterns = [
     path('create-account/', views.create_account, name='create_account'),
     path('login/', views.login_view, name='login'),
     path('movie/<int:movie_id>/', views.movie_detail, name='movie_detail'),
+    path('animanga/', views.animanga, name='animanga'),  # Keep only the main animanga route
 ]

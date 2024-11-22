@@ -20,6 +20,10 @@ body {
     padding: 0;
 }
 
+input {
+    font-family: 'Inter', Tahoma, Geneva, Verdana, sans-serif;
+}
+
 header {
     padding: 20px;
 }
@@ -28,7 +32,6 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    max-width: 1200px;
     margin: 0 auto;
 }
 
@@ -183,6 +186,7 @@ footer {
 
 .credits-section {
     margin-top: 30px;
+    width: 100%;
 }
 
 .credit-item {
@@ -210,6 +214,11 @@ footer {
     background-color: var(--card-background-dark-color);
     border-radius: 10px;
     overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+.cast-member:hover {
+    transform: translateY(-5px);
 }
 
 .cast-member img {
@@ -321,7 +330,7 @@ footer {
     font-size: 16px;
     border: none;
     border-radius: 10px;
-    font-weight: 500;
+    font-weight: 600;
     background-color: var(--card-background-dark-color);
     color: var(--text-light-color);
     box-shadow: inset 2px 2px rgba(0, 0, 0, 0.1);
@@ -343,6 +352,7 @@ footer {
     cursor: pointer;
     box-shadow: 2px 2px rgba(0, 0, 0, 0.1);
     transition: transform 0.1s ease;
+    font-family: "Passion One", sans-serif;
 }
 
 .searchbar button:hover {
@@ -361,16 +371,20 @@ searchbar button:active {
 /* Styles for the shows container */
 .shows-container h1 {
     text-align: center;
-    font-size: 32px;
+    font-size: 50px;
+    font-family: "Passion One", sans-serif;
+    font-weight: 800;
     color: var(--text-light-color);
-    text-shadow: 4px 4px rgba(0, 0, 0, 0.1);
+    text-shadow: 4px 4px rgba(0, 0, 0, 0.2);
+    margin: 0px;
 }
 
 .shows-container p {
     text-align: center;
-    font-size: 18px;
-    color: var(--text-light-color);
-    text-shadow: 2px 2px rgba(0, 0, 0, 0.1);
+    font-size: 16px;
+    font-weight: 500;
+    color: var (--text-light-color);
+    text-shadow: 2px 2px rgba(0, 0, 0, 0.2);
 }
 
 /* Styles for the movie list */
@@ -388,13 +402,22 @@ searchbar button:active {
     position: relative;
     display: flex;
     flex-direction: column;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
+
+.movie-item:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+}
+
 .movie-item h2 {
-    font-size: 15px;
+    font-size: 20px;
     padding: 10px;
     text-align: center;
     color: var(--text-color);
-    text-shadow: 2px 2px rgba(0, 0, 0, 0.1);
+    font-weight: 800;
+    font-family: "League Spartan", sans-serif;
+    text-shadow: 4px 4px rgba(0, 0, 0, 0.2);
 }
 
 .movie-image-container {
@@ -437,10 +460,11 @@ searchbar button:active {
     border-bottom-left-radius: 10px;
     border-bottom-right-radius: 10px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 18px;
     text-align: center;
     text-decoration: none;
     margin-top: auto;
+    font-family: "Passion One", sans-serif;
 }
 
 .more-info-btn:hover {
@@ -486,9 +510,12 @@ searchbar button:active {
     flex-direction: column;
     cursor: pointer;
     padding: 10px;
+    font-size: 20px;
     background-color: var(--accent-color);
     border-radius: 8px;
-    box-shadow: 2px 2px rgba(0, 0, 0, 0.1);
+}
+.menu-icon:hover {
+    color: var(--button-hover-color);
 }
 
 .menu-icon span {
@@ -594,6 +621,8 @@ searchbar button:active {
     border-radius: 10px;
     overflow: hidden;
     transition: transform 0.2s ease;
+    width: 100%;
+    height: 100%;
 }
 
 .credit-card:hover {
@@ -602,7 +631,7 @@ searchbar button:active {
 
 .credit-card img {
     width: 100%;
-    height: 250px;
+    height: 225px; /* Match the cast member image height */
     object-fit: cover;
 }
 
@@ -655,7 +684,9 @@ searchbar button:active {
     border-radius: 8px;
     cursor: pointer;
     font-size: 16px;
-    font-weight: bold;
+    font-weight: 800;
+    font-family: "Passion One", sans-serif;
+    text-shadow: 2px 2px rgba(0, 0, 0, 0.2);
     transition: all 0.2s ease;
 }
 
@@ -666,6 +697,28 @@ searchbar button:active {
 .tab-btn.active {
     background-color: var(--accent-color);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.tab-content {
+    position: relative;
+}
+
+.tab-pane {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.tab-pane.active {
+    display: block;
+    opacity: 1;
+}
+
+/* Ensure similar movies and cast sections have consistent styling */
+.movie-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
 }
 
 .tab-content {
@@ -708,9 +761,8 @@ searchbar button:active {
     flex-direction: column;
     cursor: pointer;
     padding: 10px;
-    background-color: var(--accent-color);
+    background-color: var (--accent-color);
     border-radius: 8px;
-    box-shadow: 2px 2px rgba(0, 0, 0, 0.1);
 }
 
 .menu-icon span {
@@ -739,4 +791,577 @@ searchbar button:active {
 
 #menu-toggle:checked + .menu-icon + .dropdown-menu {
     display: block;
+}
+
+/* Combined Title and Hamburger Menu Styling */
+.title-hamburger {
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background-color: var(--accent-color);
+    padding: 10px;
+    border-radius: 15px;
+    box-shadow: 4px 4px rgba(0, 0, 0, 0.2);
+}
+
+.title-hamburger h1 {
+    font-family: "Passion One", sans-serif;
+    margin: 0;
+    font-size: 32px;
+    padding: 10px 20px;
+    background: none !important;
+    border-radius: 15px;
+    display: inline-block;
+    box-shadow: 4px 4px rgba(0, 0, 0, 0);
+    text-shadow: 4px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Combined Details Tab Styling */
+.section-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    padding: 10px 20px;
+    background-color: var(--card-background-dark-color);
+    color: var(--text-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 800;
+    font-family: "Passion One", sans-serif;
+    text-shadow: 2px 2px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    background-color: var(--accent-color);
+}
+
+.tab-btn.active {
+    background-color: var(--accent-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Styling for Directors and Cast Sections within Details Tab */
+.directors-section, .cast-section {
+    margin-bottom: 20px;
+}
+
+.directors-section h2, .cast-section h2 {
+    font-size: 24px;
+    color: var(--text-light-color);
+    margin-bottom: 10px;
+}
+
+.cast-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 20px;
+}
+
+/* Combined Details Tab Styling */
+.section-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    padding: 10px 20px;
+    background-color: var(--card-background-dark-color);
+    color: var(--text-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 800;
+    font-family: "Passion One", sans-serif;
+    text-shadow: 2px 2px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    background-color: var(--accent-color);
+}
+
+.tab-btn.active {
+    background-color: var(--accent-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Styling for Directors and Cast Sections within Details Tab */
+.directors-section, .cast-section {
+    margin-bottom: 20px;
+}
+
+.directors-section h2, .cast-section h2 {
+    font-size: 24px;
+    color: var(--text-light-color);
+    margin-bottom: 10px;
+}
+
+.cast-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 20px;
+}
+
+/* Combined Details Tab Styling */
+.section-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    padding: 10px 20px;
+    background-color: var(--card-background-dark-color);
+    color: var(--text-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 800;
+    font-family: "Passion One", sans-serif;
+    text-shadow: 2px 2px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    background-color: var(--accent-color);
+}
+
+.tab-btn.active {
+    background-color: var(--accent-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Styling for Directors and Cast Sections within Details Tab */
+.directors-section, .cast-section {
+    margin-bottom: 20px;
+}
+
+.directors-section h2, .cast-section h2 {
+    font-size: 24px;
+    color: var(--text-light-color);
+    margin-bottom: 10px;
+}
+
+.cast-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 20px;
+}
+
+/* Updated Credits Layout */
+.credits-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.directors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 20px;
+}
+
+.directors-section h2, 
+.cast-section h2 {
+    font-size: 24px;
+    font-family: "Passion One", sans-serif;
+    color: var(--text-light-color);
+    margin-bottom: 20px;
+    text-shadow: 2px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Remove any specific width constraints */
+.directors-section,
+.cast-section {
+    width: 100%;
+}
+
+/* Updated Credits Layout */
+.credits-wrapper {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 30px;
+}
+
+.directors-section, .cast-section {
+    margin-bottom: 20px;
+}
+
+.directors-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+.directors-section h2, .cast-section h2 {
+    font-size: 24px;
+    font-family: "Passion One", sans-serif;
+    color: var (--text-light-color);
+    margin-bottom: 20px;
+    text-shadow: 2px 2px rgba(0, 0, 0, 0.2);
+}
+
+.directors-section .credit-card {
+    max-width: 300px; /* Limit the width to match cast cards */
+}
+
+/* Pagination Styles */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+.page-btn {
+    padding: 10px 20px;
+    background-color: var(--accent-color);
+    color: var(--text-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    font-family: "Passion One", sans-serif;
+    font-size: 16px;
+    transition: all 0.2s ease;
+    box-shadow: 2px 2px rgba(0, 0, 0, 0.2);
+}
+
+.page-btn:hover {
+    background-color: var(--button-hover-color);
+    transform: translateY(-2px);
+}
+
+/* Loading Indicator Styles */
+.loading-indicator {
+    text-align: center;
+    padding: 20px;
+    font-family: "Passion One", sans-serif;
+    color: var(--text-color);
+    font-size: 18px;
+    margin-top: 20px;
+    background-color: var(--card-background-color);
+    border-radius: 10px;
+    box-shadow: 4px 4px rgba(0, 0, 0, 0.2);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+.loading-indicator {
+    text-align: center;
+    padding: 20px;
+    font-family: "Passion One", sans-serif;
+    color: var(--text-color);
+    font-size: 18px;
+    margin: 20px 0;
+    background-color: var(--card-background-color);
+    border-radius: 10px;
+    box-shadow: 4px 4px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid var(--text-color);
+    border-top: 3px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Alpine.js Transitions */
+.menu-enter {
+    transition: all 0.3s ease-out;
+}
+
+.menu-enter-start {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.menu-enter-end {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.menu-leave {
+    transition: all 0.2s ease-in;
+}
+
+.menu-leave-start {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.menu-leave-end {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+/* Search Animations */
+.searchbar input.searching {
+    background-image: linear-gradient(90deg, 
+        var(--card-background-dark-color) 0%,
+        var(--accent-color) 50%,
+        var(--card-background-dark-color) 100%);
+    background-size: 200% 100%;
+    animation: loading-pulse 2s infinite;
+}
+
+.searchbar button.searching {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes loading-pulse {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.book-cover {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    border-radius: 8px;
+    transition: transform 0.3s ease;
+}
+
+.book-cover:hover {
+    transform: scale(1.05);
+}
+
+.image-placeholder {
+    width: 100%;
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--card-background-dark-color);
+    border-radius: 8px;
+}
+
+.fallback {
+    filter: grayscale(0.5);
+}
+
+.fade-enter {
+    transition: all 0.3s ease-out;
+}
+
+.fade-enter-start {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.fade-enter-end {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.book-info {
+    padding: 1rem;
+    text-align: center;
+}
+
+.author {
+    color: var(--text-light-color);
+    font-size: 0.9rem;
+    margin: 0.5rem 0;
+}
+
+/* Loading States */
+[x-cloak] { display: none !important; }
+
+/* Book-specific Styles */
+.books-container {
+    padding: 20px;
+}
+
+.books-container h1 {
+    text-align: center;
+    font-size: 50px;
+    font-family: "Passion One", sans-serif;
+    font-weight: 800;
+    color: var(--text-light-color);
+    text-shadow: 4px 4px rgba(0, 0, 0, 0.2);
+    margin: 0px;
+}
+
+.book-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.book-item {
+    background-color: var(--card-background-color);
+    border-radius: 10px;
+    box-shadow: 5px 5px rgba(0, 0, 0, 0.2);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.book-item:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+}
+
+.book-cover-container {
+    position: relative;
+    width: 100%;
+    height: 300px;
+}
+
+.book-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.book-info {
+    padding: 15px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.book-title {
+    font-size: 18px;
+    color: var(--text-color);
+    font-weight: bold;
+    margin-bottom: 8px;
+    font-family: "League Spartan", sans-serif;
+}
+
+.book-author {
+    font-size: 14px;
+    color: var(--text-light-color);
+    margin-bottom: 15px;
+}
+
+/* Anime-specific Styles */
+.anime-container {
+    padding: 20px;
+}
+
+.anime-container h1 {
+    text-align: center;
+    font-size: 50px;
+    font-family: "Passion One", sans-serif;
+    font-weight: 800;
+    color: var(--text-light-color);
+    text-shadow: 4px 4px rgba(0, 0, 0, 0.2);
+    margin: 0px;
+}
+
+.anime-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.anime-item {
+    background-color: var(--card-background-color);
+    border-radius: 10px;
+    box-shadow: 5px 5px rgba(0, 0, 0, 0.2);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.anime-item:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+}
+
+.anime-cover-container {
+    position: relative;
+    width: 100%;
+    height: 300px;
+}
+
+.anime-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.anime-info {
+    padding: 15px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.anime-title {
+    font-size: 18px;
+    color: var(--text-color);
+    font-weight: bold;
+    margin-bottom: 8px;
+    font-family: "League Spartan", sans-serif;
+}
+.anime-score, .anime-episodes {
+    font-size: 14px;
+    color: var(--text-light-color);
+    margin-bottom: 8px;
+}
+
+.anime-genres {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+/* Updated anime-specific styles */
+.anime-genres-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 5px;
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+.anime-genres-grid .genre-tag {
+    text-align: center;
+    padding: 4px 8px;
+    background-color: var(--accent-color);
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

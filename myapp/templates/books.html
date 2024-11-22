@@ -1,10 +1,241 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Books</title>
+    <title>Trending Books</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'styles.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Caprasimo&family=League+Spartan:wght@100..900&family=Passion+One:wght@400;700;900&family=Ultra&family=Young+Serif&display=swap" rel="stylesheet">
+    <!-- Add Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Add Alpine.js -->
+    <script src="//unpkg.com/alpinejs" defer></script>
+    <script src="//unpkg.com/intersection-observer" defer></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body>
-    <h1>Books</h1>
+    <header>
+        <div class="header-content" x-data="{ isMenuOpen: false }">
+            <div class="title-menu-container">
+                <!-- Combined Title and Hamburger Menu -->
+                <div class="title-hamburger" @mouseleave="isMenuOpen = false">
+                    <h1>Books</h1>
+                    <div class="hamburger-menu">
+                        <input type="checkbox" id="menu-toggle" x-model="isMenuOpen">
+                        <!-- Use Font Awesome Icon -->
+                        <label for="menu-toggle" class="menu-icon" @click="isMenuOpen = !isMenuOpen">
+                            <i class="fas" :class="isMenuOpen ? 'fa-times' : 'fa-bars'"
+                               x-transition:enter="menu-enter"
+                               x-transition:enter-start="menu-enter-start"
+                               x-transition:enter-end="menu-enter-end"></i>
+                        </label>
+                        <div class="dropdown-menu" 
+                             x-show="isMenuOpen"
+                             x-transition:enter="menu-enter"
+                             x-transition:enter-start="menu-enter-start"
+                             x-transition:enter-end="menu-enter-end"
+                             x-transition:leave="menu-leave"
+                             x-transition:leave-start="menu-leave-start"
+                             x-transition:leave-end="menu-leave-end">
+                            <ul>
+                                <li><a href="{% url 'books' %}">Trending Books</a></li>
+                                <!-- Add more categories as needed -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="{% url 'account' %}">Create Account / Login</a></li>
+                    <li><a href="{% url 'books' %}">Books</a></li>
+                    <li><a href="{% url 'shows' %}">Shows</a></li>
+                    <li><a href="{% url 'animanga' %}">Anime & Manga</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <main x-data="{ 
+        searchQuery: '',
+        isSearching: false,
+        debounceTimeout: null,
+        isLoading: false,
+        handleScroll() {
+            if ((window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 100) {
+                if (!this.isLoading) {
+                    this.loadMore();
+                }
+            }
+        },
+        async loadMore() {
+            if (this.isLoading) return;
+            
+            this.isLoading = true;
+            const nextPage = this.currentPage + 1;
+            
+            try {
+                const response = await fetch(
+                    `?page=${nextPage}&q={{ searchQuery }}`
+                );
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newBooks = doc.querySelector('.book-list').innerHTML;
+                this.$refs.bookList.insertAdjacentHTML('beforeend', newBooks);
+                this.currentPage = nextPage;
+            } catch (error) {
+                console.error('Error loading more books:', error);
+            } finally {
+                this.isLoading = false;
+            }
+        },
+        async searchBooks() {
+            if (this.debounceTimeout) clearTimeout(this.debounceTimeout);
+            this.debounceTimeout = setTimeout(async () => {
+                if (this.searchQuery.length > 2) {
+                    this.isSearching = true;
+                    const response = await fetch(`?q=${this.searchQuery}`);
+                    const html = await response.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    this.$refs.bookList.innerHTML = doc.querySelector('.book-list').innerHTML;
+                    this.isSearching = false;
+                }
+            }, 300);
+        }
+    }"
+    @scroll.window="handleScroll">
+        <div class="searchbar">
+            <form @submit.prevent="searchBooks()">
+                <input type="text" 
+                       x-model="searchQuery" 
+                       @input="searchBooks()"
+                       placeholder="Search for books..."
+                       :class="{ 'searching': isSearching }">
+                <button type="submit" 
+                        :disabled="isSearching"
+                        :class="{ 'searching': isSearching }">
+                    <i class="fas" :class="isSearching ? 'fa-spinner fa-spin' : 'fa-search'"></i>
+                </button>
+            </form>
+        </div>
+        
+        <div class="books-container">
+            <h1>Trending Books</h1>
+            <div class="book-list" x-ref="bookList">
+                {% for book in books %}
+                    <div class="book-item" 
+                         x-data="{ imageLoaded: false, imageError: false }"
+                         x-transition:enter="fade-enter"
+                         x-transition:enter-start="fade-enter-start"
+                         x-transition:enter-end="fade-enter-end">
+                        <div class="book-cover-container">
+                            {% if book.olid %}
+                                <img x-show="imageLoaded && !imageError"
+                                     @load="imageLoaded = true"
+                                     @error="imageError = true"
+                                     src="https://covers.openlibrary.org/b/olid/{{ book.olid }}-M.jpg"  <!-- Use medium size instead of large -->
+                                     loading="lazy"  <!-- Add lazy loading -->
+                                     alt="{{ book.title }}"
+                                     class="book-cover">
+                                <!-- Loading placeholder -->
+                                <div x-show="!imageLoaded && !imageError" 
+                                     class="image-placeholder">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                </div>
+                            {% endif %}
+                            <!-- Fallback image -->
+                            <img x-show="imageError"
+                                 src="{% static 'default_book_cover.jpg' %}"
+                                 alt="{{ book.title }}"
+                                 class="book-cover fallback">
+                        </div>
+                        <div class="book-info">
+                            <h2 class="book-title">{{ book.title }}</h2>
+                            {% if book.authors %}
+                                <p class="book-author">by {{ book.authors|join:", " }}</p>
+                            {% endif %}
+                            <a href="https://openlibrary.org{{ book.key }}" 
+                               class="more-info-btn"
+                               target="_blank"
+                               rel="noopener">
+                                More info
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <div x-ref="loadingIndicator" class="loading-indicator" x-show="isLoading">
+                <div class="spinner"></div>
+                Loading more books...
+            </div>
+        </div>
+    </main>
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('infiniteScroll', () => ({
+                currentPage: 1,
+                isLoading: false,
+
+                init() {
+                    const loadingIndicator = this.$refs.loadingIndicator;
+                    const options = {
+                        root: null,
+                        rootMargin: '0px',
+                        threshold: 1.0
+                    };
+
+                    const observer = new IntersectionObserver(entries => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting && !this.isLoading) {
+                                this.loadMore();
+                            }
+                        });
+                    }, options);
+
+                    if (loadingIndicator) {
+                        observer.observe(loadingIndicator);
+                    }
+
+                    // Also add scroll event listener as backup
+                    window.addEventListener('scroll', () => {
+                        if ((window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 100) {
+                            if (!this.isLoading) {
+                                this.loadMore();
+                            }
+                        }
+                    });
+                },
+
+                async loadMore() {
+                    if (this.isLoading) return;
+                    
+                    this.isLoading = true;
+                    const nextPage = this.currentPage + 1;
+                    
+                    try {
+                        const response = await fetch(
+                            `?page=${nextPage}&q={{ searchQuery }}`
+                        );
+                        const html = await response.text();
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const newBooks = doc.querySelector('.book-list').innerHTML;
+                        
+                        this.$refs.bookList.insertAdjacentHTML('beforeend', newBooks);
+                        this.currentPage = nextPage;
+                        
+                    } catch (error) {
+                        console.error('Error loading more books:', error);
+                    } finally {
+                        this.isLoading = false;
+                    }
+                }
+            }))
+        });
+    </script>
     <a href="{% url 'main_page' %}">Back to Main Page</a>
 </body>
 </html>

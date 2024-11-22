@@ -23,7 +23,7 @@
             <div class="info-grid">
                 <div class="info-card poster-card">
                     <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" alt="{{ movie.title }} Poster" class="movie-poster">
-                    <button class="add-to-watchlist-large">Add to Watchlist</button>
+                    <button class="add-to-watchlist-large" @click="addToWatchlist({{ movie.id }})" x-text="watchlist.includes({{ movie.id }}) ? 'In Watchlist' : 'Add to Watchlist'" :class="{ 'in-watchlist': watchlist.includes({{ movie.id }}) }">Add to Watchlist</button>
                 </div>
 
                 <div class="info-card details-card">
@@ -45,47 +45,56 @@
             </div>
 
             <!-- Combined Credits and Similar Movies Card -->
-            <div class="info-card combined-card">
+            <div class="info-card combined-card" x-data="{ 
+                activeTab: 'details',
+                watchlist: [],
+                addToWatchlist(movie) {
+                    this.watchlist.push(movie);
+                    // Add animation and notification
+                    $dispatch('notify', {
+                        message: 'Added to watchlist!',
+                        type: 'success'
+                    });
+                }
+            }">
                 <div class="section-tabs">
-                    <button class="tab-btn active" data-tab="directors">Directors</button>
-                    <button class="tab-btn" data-tab="cast">Cast</button>
+                    <button class="tab-btn active" data-tab="details">Details</button>
                     <button class="tab-btn" data-tab="similar">Similar Movies</button>
                 </div>
 
                 <div class="tab-content">
-                    <div class="tab-pane active" id="directors">
-                        <div class="credits-grid">
-                            {% for director in directors %}
-                                <div class="credit-card">
-                                    {% if director.profile_path %}
-                                        <img src="https://image.tmdb.org/t/p/w185{{ director.profile_path }}" alt="{{ director.name }}">
-                                    {% else %}
-                                        <div class="no-photo">No Photo</div>
-                                    {% endif %}
-                                    <div class="credit-info">
-                                        <span class="name">{{ director.name }}</span>
-                                        <span class="role">Director</span>
+                    <!-- Combined Details Tab Pane -->
+                    <div class="tab-pane active" id="details">
+                        <div class="credits-section">
+                            <h2>Cast & Crew</h2>
+                            <div class="cast-grid">
+                                {% for director in directors %}
+                                    <div class="cast-member">
+                                        {% if director.profile_path %}
+                                            <img src="https://image.tmdb.org/t/p/w185{{ director.profile_path }}" alt="{{ director.name }}">
+                                        {% else %}
+                                            <div class="no-photo">No Photo</div>
+                                        {% endif %}
+                                        <div class="actor-info">
+                                            <span class="actor-name">{{ director.name }}</span>
+                                            <span class="character-name">Director</span>
+                                        </div>
                                     </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <div class="tab-pane" id="cast">
-                        <div class="credits-grid">
-                            {% for actor in cast %}
-                                <div class="credit-card">
-                                    {% if actor.profile_path %}
-                                        <img src="https://image.tmdb.org/t/p/w185{{ actor.profile_path }}" alt="{{ actor.name }}">
-                                    {% else %}
-                                        <div class="no-photo">No Photo</div>
-                                    {% endif %}
-                                    <div class="credit-info">
-                                        <span class="name">{{ actor.name }}</span>
-                                        <span class="role">as {{ actor.character }}</span>
+                                {% endfor %}
+                                {% for cast_member in cast %}
+                                    <div class="cast-member">
+                                        {% if cast_member.profile_path %}
+                                            <img src="https://image.tmdb.org/t/p/w185{{ cast_member.profile_path }}" alt="{{ cast_member.name }}">
+                                        {% else %}
+                                            <div class="no-photo">No Photo</div>
+                                        {% endif %}
+                                        <div class="actor-info">
+                                            <span class="actor-name">{{ cast_member.name }}</span>
+                                            <span class="character-name">as {{ cast_member.character }}</span>
+                                        </div>
                                     </div>
-                                </div>
-                            {% endfor %}
+                                {% endfor %}
+                            </div>
                         </div>
                     </div>
 
@@ -103,6 +112,21 @@
                             {% endfor %}
                         </div>
                     </div>
+                </div>
+                <!-- Notification System -->
+                <div class="notification-container" 
+                     x-data="{ notifications: [] }"
+                     @notify.window="notifications.push($event.detail); 
+                                    setTimeout(() => notifications.shift(), 3000)">
+                    <template x-for="notification in notifications" :key="notification.id">
+                        <div class="notification" 
+                             x-show="true"
+                             x-transition:enter="notification-enter"
+                             x-transition:leave="notification-leave"
+                             :class="notification.type">
+                            <span x-text="notification.message"></span>
+                        </div>
+                    </template>
                 </div>
             </div>
         </div>

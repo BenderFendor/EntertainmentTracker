@@ -7,33 +7,50 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Caprasimo&family=League+Spartan:wght@100..900&family=Passion+One:wght@400;700;900&family=Ultra&family=Young+Serif&display=swap" rel="stylesheet">
+    <!-- Add Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Add Alpine.js -->
+    <script src="//unpkg.com/alpinejs" defer></script>
+    <script src="//unpkg.com/intersection-observer" defer></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body>
     <header>
-        <div class="header-content">
+        <div class="header-content" x-data="{ isMenuOpen: false }">
             <div class="title-menu-container">
-                >
-                <div class="hamburger-menu">
-                    <h1>Shows</h1
-                    <input type="checkbox" id="menu-toggle">
-                    <label for="menu-toggle" class="menu-icon">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </label>
-                    <div class="dropdown-menu">
-                        <ul>
-                            <li><a href="{% url 'shows' %}?category=popular">Popular Shows</a></li>
-                            <li><a href="{% url 'shows' %}?category=top_rated">Top Rated</a></li>
-                            <li class="divider"></li>
-                            <li>Genres</li>
-                            <li><a href="{% url 'shows' %}?genre=action">Action</a></li>
-                            <li><a href="{% url 'shows' %}?genre=comedy">Comedy</a></li>
-                            <li><a href="{% url 'shows' %}?genre=drama">Drama</a></li>
-                            <li><a href="{% url 'shows' %}?genre=sci-fi">Sci-Fi</a></li>
-                            <!-- Add more genres as needed -->
-                        </ul>
+                <!-- Combined Title and Hamburger Menu -->
+                <div class="title-hamburger" @mouseleave="isMenuOpen = false">
+                    <h1>Shows</h1>
+                    <div class="hamburger-menu">
+                        <input type="checkbox" id="menu-toggle" x-model="isMenuOpen">
+                        <!-- Use Font Awesome Icon -->
+                        <label for="menu-toggle" class="menu-icon" @click="isMenuOpen = !isMenuOpen">
+                            <i class="fas" :class="isMenuOpen ? 'fa-times' : 'fa-bars'"
+                               x-transition:enter="menu-enter"
+                               x-transition:enter-start="menu-enter-start"
+                               x-transition:enter-end="menu-enter-end"></i>
+                        </label>
+                        <div class="dropdown-menu" 
+                             x-show="isMenuOpen"
+                             x-transition:enter="menu-enter"
+                             x-transition:enter-start="menu-enter-start"
+                             x-transition:enter-end="menu-enter-end"
+                             x-transition:leave="menu-leave"
+                             x-transition:leave-start="menu-leave-start"
+                             x-transition:leave-end="menu-leave-end">
+                            <ul>
+                                <li><a href="{% url 'shows' %}?category=popular">Popular Shows</a></li>
+                                <li><a href="{% url 'shows' %}?category=top_rated">Top Rated</a></li>
+                                <li class="divider"></li>
+                                <li>Genres</li>
+                                <li><a href="{% url 'shows' %}?genre=action">Action</a></li>
+                                <li><a href="{% url 'shows' %}?genre=comedy">Comedy</a></li>
+                                <li><a href="{% url 'shows' %}?genre=drama">Drama</a></li>
+                                <li><a href="{% url 'shows' %}?genre=sci-fi">Sci-Fi</a></li>
+                                <!-- Add more genres as needed -->
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -42,21 +59,78 @@
                     <li><a href="{% url 'account' %}">Create Account / Login</a></li>
                     <li><a href="{% url 'books' %}">Books</a></li>
                     <li><a href="{% url 'shows' %}">Shows</a></li>
+                    <li><a href="{% url 'animanga' %}">Anime & Manga</a></li>
                 </ul>
             </nav>
         </div>
     </header>
-    <main>
+    <main x-data="{ 
+        searchQuery: '',
+        isSearching: false,
+        debounceTimeout: null,
+        isLoading: false,
+        handleScroll() {
+            if ((window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 100) {
+                if (!this.isLoading) {
+                    this.loadMore();
+                }
+            }
+        },
+        async loadMore() {
+            if (this.isLoading) return;
+            const nextPage = parseInt('{{ current_page }}') + 1;
+            if (nextPage > parseInt('{{ total_pages }}')) return;
+            
+            this.isLoading = true;
+            try {
+                const response = await fetch(
+                    `?page=${nextPage}&query={{ query }}&category={{ category }}&genre={{ genre }}`
+                );
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newMovies = doc.querySelector('.movie-list').innerHTML;
+                this.$refs.movieList.insertAdjacentHTML('beforeend', newMovies);
+            } catch (error) {
+                console.error('Error loading more movies:', error);
+            } finally {
+                this.isLoading = false;
+            }
+        },
+        async searchShows() {
+            if (this.debounceTimeout) clearTimeout(this.debounceTimeout);
+            this.debounceTimeout = setTimeout(async () => {
+                if (this.searchQuery.length > 2) {
+                    this.isSearching = true;
+                    const response = await fetch(`?query=${this.searchQuery}`);
+                    const html = await response.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    this.$refs.movieList.innerHTML = doc.querySelector('.movie-list').innerHTML;
+                    this.isSearching = false;
+                }
+            }, 300);
+        }
+    }"
+    @scroll.window="handleScroll">
         <div class="searchbar">
-            <form method="GET" action="{% url 'shows' %}">
-                <input type="text" name="query" placeholder="Search for shows..." value="{{ query }}">
-                <button type="submit">Search</button>
+            <form @submit.prevent="searchShows()">
+                <input type="text" 
+                       x-model="searchQuery" 
+                       @input="searchShows()"
+                       placeholder="Search for shows..."
+                       :class="{ 'searching': isSearching }">
+                <button type="submit" 
+                        :disabled="isSearching"
+                        :class="{ 'searching': isSearching }">
+                    <i class="fas" :class="isSearching ? 'fa-spinner fa-spin' : 'fa-search'"></i>
+                </button>
             </form>
         </div>
         <div class="shows-container">
             <h1>{% if query %}Search Results{% else %}{{ description }}{% endif %}</h1>
             <p>{% if query %}Results for "{{ query }}"{% else %}Discover the latest and most {{ description|lower }} to watch.{% endif %}</p>
-            <div class="movie-list">
+            <div class="movie-list" x-ref="movieList">
                 {% for movie in movies %}
                     <div class="movie-item">
                         <div class="movie-image-container">
@@ -73,7 +147,75 @@
                     </div>
                 {% endfor %}
             </div>
+            <div x-ref="loadingIndicator" class="loading-indicator" x-show="isLoading">
+                <div class="spinner"></div>
+                Loading more movies...
+            </div>
         </div>
     </main>
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('infiniteScroll', () => ({
+                currentPage: parseInt('{{ current_page }}'),
+                totalPages: parseInt('{{ total_pages }}'),
+                isLoading: false,
+
+                init() {
+                    const loadingIndicator = this.$refs.loadingIndicator;
+                    const options = {
+                        root: null,
+                        rootMargin: '0px',
+                        threshold: 1.0
+                    };
+
+                    const observer = new IntersectionObserver(entries => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting && !this.isLoading && this.currentPage < this.totalPages) {
+                                this.loadMore();
+                            }
+                        });
+                    }, options);
+
+                    if (loadingIndicator) {
+                        observer.observe(loadingIndicator);
+                    }
+
+                    // Also add scroll event listener as backup
+                    window.addEventListener('scroll', () => {
+                        if ((window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 100) {
+                            if (!this.isLoading && this.currentPage < this.totalPages) {
+                                this.loadMore();
+                            }
+                        }
+                    });
+                },
+
+                async loadMore() {
+                    if (this.isLoading || this.currentPage >= this.totalPages) return;
+                    
+                    this.isLoading = true;
+                    const nextPage = this.currentPage + 1;
+                    
+                    try {
+                        const response = await fetch(
+                            `?page=${nextPage}&query={{ query }}&category={{ category }}&genre={{ genre }}`
+                        );
+                        const html = await response.text();
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const newMovies = doc.querySelector('.movie-list').innerHTML;
+                        
+                        this.$refs.movieList.insertAdjacentHTML('beforeend', newMovies);
+                        this.currentPage = nextPage;
+                        
+                    } catch (error) {
+                        console.error('Error loading more movies:', error);
+                    } finally {
+                        this.isLoading = false;
+                    }
+                }
+            }))
+        });
+    </script>
 </body>
 </html>
