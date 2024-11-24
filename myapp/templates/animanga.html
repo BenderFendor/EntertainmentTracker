@@ -19,9 +19,38 @@
     <header>
         <div class="header-content" x-data="{ isMenuOpen: false }">
             <div class="title-menu-container">
+                <!-- Combined Title and Hamburger Menu -->
                 <div class="title-hamburger" @mouseleave="isMenuOpen = false">
                     <h1>Anime & Manga</h1>
                     <div class="hamburger-menu">
+                        <input type="checkbox" id="menu-toggle" x-model="isMenuOpen">
+                        <!-- Use Font Awesome Icon -->
+                        <label for="menu-toggle" class="menu-icon" @click="isMenuOpen = !isMenuOpen">
+                            <i class="fas" :class="isMenuOpen ? 'fa-times' : 'fa-bars'"
+                               x-transition:enter="menu-enter"
+                               x-transition:enter-start="menu-enter-start"
+                               x-transition:enter-end="menu-enter-end"></i>
+                        </label>
+                        <div class="dropdown-menu" 
+                             x-show="isMenuOpen"
+                             x-transition:enter="menu-enter"
+                             x-transition:enter-start="menu-enter-start"
+                             x-transition:enter-end="menu-enter-end"
+                             x-transition:leave="menu-leave"
+                             x-transition:leave-start="menu-leave-start"
+                             x-transition:leave-end="menu-leave-end">
+                            <ul>
+                                <li><a href="{% url 'animanga' %}?category=popular">Popular Anime</a></li>
+                                <li><a href="{% url 'animanga' %}?category=top_rated">Top Rated</a></li>
+                                <li class="divider"></li>
+                                <li>Genres</li>
+                                <li><a href="{% url 'animanga' %}?genre=action">Action</a></li>
+                                <li><a href="{% url 'animanga' %}?genre=comedy">Comedy</a></li>
+                                <li><a href="{% url 'animanga' %}?genre=drama">Drama</a></li>
+                                <li><a href="{% url 'animanga' %}?genre=sci-fi">Sci-Fi</a></li>
+                                <!-- Add more genres as needed -->
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -39,8 +68,8 @@
     <main x-data="{ 
         searchQuery: '{{ query|default:"" }}',
         isLoading: false,
-        currentPage: {{ page|default:1 }},
-        hasNextPage: {{ has_next_page|yesno:'true,false' }},
+        currentPage: {{ current_page|default:1 }},
+        hasNextPage: {{ has_next|yesno:'true,false' }},
 
         async handleSearch() {
             if (this.debounceTimeout) clearTimeout(this.debounceTimeout);
@@ -112,32 +141,46 @@
                     {% for anime in animanga_list %}
                         <div class="anime-item">
                             <div class="anime-cover-container">
+                                {% if anime.status and anime.format != "MOVIE" %}
+                                    <p class="anime-status">{{ anime.status }}</p>
+                                {% endif %}
                                 <img src="{{ anime.coverImage.large }}"
                                      alt="{{ anime.title.english|default:anime.title.romaji }}"
                                      class="anime-cover">
-                                {% if anime.nextAiringEpisode %}
-                                    <div class="airing-info">
-                                        EP {{ anime.nextAiringEpisode.episode }} in 
-                                        <span x-text="calculateDays({{ anime.nextAiringEpisode.timeUntilAiring }})"></span> days
-                                    </div>
-                                {% endif %}
                             </div>
                             <div class="anime-info">
                                 <h2 class="anime-title">{{ anime.title.english|default:anime.title.romaji }}</h2>
                                 {% if anime.averageScore %}
                                     <p class="anime-score">Score: {{ anime.averageScore }}%</p>
                                 {% endif %}
-                                {% if anime.episodes %}
-                                    <p class="anime-episodes">Episodes: {{ anime.episodes }}</p>
-                                {% endif %}
+                                
+                                <!-- Updated episode display -->
+                                <p class="anime-episodes">
+                                    {% if anime.format == "MOVIE" %}
+                                    {% else %}
+                                        Episode: 
+                                        {% if anime.status == "RELEASING" and anime.nextAiringEpisode %}
+                                            {{ anime.nextAiringEpisode.episode|add:"-1" }}
+                                            {% if anime.episodes %}
+                                                /{{ anime.episodes }}
+                                            {% endif %}
+                                        {% else %}
+                                            {{ anime.episodes|default:"?" }}
+                                        {% endif %}
+                                    {% endif %}
+                                </p>
+                                                            
+      
+                                
+                                <!-- Genre display -->
                                 <div class="anime-genres">
                                     {% for genre in anime.genres|slice:":3" %}
                                         <span class="genre-tag">{{ genre }}</span>
                                     {% endfor %}
                                 </div>
-                                {% if anime.status %}
-                                    <p class="anime-status">Status: {{ anime.status }}</p>
-                                {% endif %}
+
+                                <!-- More Info button -->
+                                <a href="{% url 'anime_detail' anime.id %}" class="more-info-btn">More Info</a>
                             </div>
                         </div>
                     {% endfor %}

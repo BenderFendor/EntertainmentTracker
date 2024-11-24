@@ -163,6 +163,45 @@ def movie_detail(request, movie_id):
     
     return render(request, 'infopage.html', context)
 
+def anime_detail(request, anime_id):
+    api_key = settings.TMDB_API_KEY
+    headers = {
+        "accept": "application/json",
+        "Authorization": f"Bearer {api_key}"
+    }
+    
+    # Get anime details
+    anime_url = f"https://api.themoviedb.org/3/anime/{anime_id}?language=en-US&append_to_response=credits,videos,similar"
+    response = requests.get(anime_url, headers=headers)
+    
+    if response.status_code == 200:
+        anime = response.json()
+        
+        # Process credits data
+        credits = anime.get('credits', {})
+        
+        # Get director
+        directors = [crew for crew in credits.get('crew', []) if crew['job'] == 'Director']
+        
+        # Get main cast (limit to top 6)
+        cast = credits.get('cast', [])[:6]
+        
+        # Format genres
+        genres = [genre['name'] for genre in anime.get('genres', [])]
+        
+        context = {
+            'anime': anime,
+            'directors': directors,
+            'cast': cast,
+            'genres': genres,
+            'similar_anime': anime.get('similar', {}).get('results', [])[:4]
+        }
+    else:
+        context = {}
+        messages.error(request, 'Failed to retrieve anime details.')
+    
+    return render(request, 'infopage.html', context)
+
 def account(request):
     return render(request, 'account')
 
@@ -193,58 +232,81 @@ def login_view(request):
     return render(request, 'login.html')
 
 def animanga(request):
-    query = request.GET.get('query', '')
     page = request.GET.get('page', 1)
-    limit = 20
-
-    url = "https://graphql.anilist.co"
-    headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-    }
+    
     query_string = '''
     query ($page: Int = 1) {
-    Page(page: $page, perPage: 20) {
-        pageInfo {
-        hasNextPage
-        currentPage
+        Page(page: $page, perPage: 50) {
+            pageInfo {
+                hasNextPage
+                currentPage
+            }
+            media(type: ANIME, sort: TRENDING_DESC) {
+                id
+                episodes
+                status
+                format
+                genres
+                coverImage {
+                    large
+                }
+                nextAiringEpisode {
+                    episode
+                }
+                title {
+                    english
+                    romaji
+                }
+            }
         }
-        media(type: ANIME, sort: TRENDING_DESC) {
-        id
-        episodes
-        averageScore
-        format
-        coverImage {
-            large
-        }
-        title {
-            english
-            romaji
-        }
-        }
-    }
     }
     '''
+    
     variables = {
         'page': int(page)
     }
 
-    response = requests.post(url, headers=headers, json={'query': query_string, 'variables': variables})
-    data = response.json()
-    print(data)
+    try:
+        headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'User-Agent': 'Entertainment Tracker/1.0'
+        }
+        response = requests.post(
+            'https://graphql.anilist.co',
+            json={
+                'query': query_string,
+                'variables': variables
+            },
+            headers=headers
+        )
+        
+        response.raise_for_status()
+        data = response.json()
+        
+        if 'errors' in data:
+            return render(request, 'animanga.html', {
+                'error': data['errors'][0]['message'],
+                'animanga_list': [],
+                'has_next': False,
+                'current_page': int(page)
+            })
 
-    if 'errors' in data:
-        messages.error(request, 'Failed to retrieve data from AniList.')
-        animanga_list = []
-    else:
-        animanga_list = data['data']['Page']['media']
+        page_data = data['data']['Page']
+        context = {
+            'animanga_list': page_data.get('media', []),
+            'has_next': page_data.get('pageInfo', {}).get('hasNextPage', False),
+            'current_page': int(page)
+        }
+    except requests.RequestException as e:
+        return render(request, 'animanga.html', {
+            'error': f"Failed to fetch anime: {str(e)}",
+            'animanga_list': [],
+            'has_next': False,
+            'current_page': int(page)
+        })
 
-    return render(request, 'animanga.html', {
-        'animanga_list': animanga_list,
-        'query': query,
-        'page': page,
-        'has_next_page': data['data']['Page']['pageInfo']['hasNextPage']
-    })
+    return render(request, 'animanga.html', context)
 
 def get_anime_filters():
     return {
@@ -260,3 +322,6 @@ def get_anime_filters():
 def animanga_view(request):
     # ...existing code...
     return render(request, 'animanga.html')
+
+def animanga_Detal(request):
+    return render(request, 'infopage.html')
