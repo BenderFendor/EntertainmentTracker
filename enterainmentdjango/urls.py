@@ -12,5 +12,8 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('movie/<int:movie_id>/', views.movie_detail, name='movie_detail'),
     path('animanga/', views.animanga, name='animanga'),  # Keep only the main animanga route
-    path('anime/<int:anime_id>/', views.animanga_detail, name='anime_detail'),
+    path('animanga/<int:anime_id>/', views.animanga_detail, name='anime_detail'),
+    path('api/trending-posters', views.get_trending_posters, name='trending-posters'),
+    path('api/trending-anime', views.get_trending_anime, name='trending-anime'),
+
 ]

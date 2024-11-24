@@ -6,6 +6,7 @@ from django.shortcuts import render, redirect
 import boto3
 from django.core.paginator import Paginator
 import os
+from django.http import JsonResponse
 
 def get_genre_id(genre_name):
     genre_mapping = {
@@ -526,3 +527,52 @@ def animanga_detail(request, anime_id):
         })
 
     return render(request, 'animangainfo.html', context)
+
+def get_trending_anime(request):
+    query_string = '''
+    query {
+        Page(page: 1, perPage: 10) {
+            media(type: ANIME, sort: TRENDING_DESC) {
+                coverImage {
+                    extraLarge
+                }
+            }
+        }
+    }
+    '''
+    
+    try:
+        response = requests.post(
+            'https://graphql.anilist.co',
+            json={'query': query_string},
+            headers={'Accept': 'application/json'}
+        )
+        data = response.json()
+        posters = [
+            {"image_url": item["coverImage"]["extraLarge"]}
+            for item in data["data"]["Page"]["media"]
+            if item["coverImage"]["extraLarge"]
+        ]
+        return JsonResponse(posters, safe=False)
+    except Exception:
+        return JsonResponse([], safe=False)
+
+def get_trending_posters(request):
+    # Update existing function to return image_url format
+    api_key = settings.TMDB_API_KEY
+    headers = {
+        "accept": "application/json",
+        "Authorization": f"Bearer {api_key}"
+    }
+    
+    url = "https://api.themoviedb.org/3/trending/movie/week"
+    response = requests.get(url, headers=headers)
+    data = response.json()
+    
+    posters = [
+        {"image_url": f"https://image.tmdb.org/t/p/w500{movie['poster_path']}"} 
+        for movie in data.get("results", [])[:10] 
+        if movie.get("poster_path")
+    ]
+    
+    return JsonResponse(posters, safe=False)

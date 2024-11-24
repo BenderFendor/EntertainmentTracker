@@ -1,48 +1,201 @@
 {% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <!-- Meta tags and title -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Entertainment Tracker</title>
     <link rel="stylesheet" type="text/css" href="{% static 'styles.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Caprasimo&family=League+Spartan:wght@100..900&family=Passion+One:wght@400;700;900&family=Ultra&family=Young+Serif&display=swap" rel="stylesheet">
+    <!-- Add Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Add Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    {% load static %}
 </head>
-<body>
-    <header>
-        <h1>Welcome to Entertainment Tracker</h1>
-        <nav>
-            <ul>
-                <li><a href="{% url 'account' %}">Create Account / Login</a></li>
-                <li><a href="(% url 'books' %}">Books</a></li>
-                <li><a href="{% url 'shows' %}">Shows</a></li>
-            </ul>
+<body x-data>
+    <header x-cloak x-data>
+        <nav class="navbar" x-show="!$store.panels.open" 
+             x-transition:enter="navbar-enter" 
+             x-transition:enter-start="navbar-enter-start" 
+             x-transition:enter-end="navbar-enter-end"
+             x-transition:leave="navbar-leave" 
+             x-transition:leave-start="navbar-leave-start" 
+             x-transition:leave-end="navbar-leave-end"
+             x-data="{ 
+                lastScrollY: 0,
+                navbarTop: 0,
+                init() {
+                    this.navbarTop = this.$el.getBoundingClientRect().top + window.scrollY;
+                    this.updatePosition();
+                    window.addEventListener('scroll', () => this.updatePosition());
+                    window.addEventListener('resize', () => this.updatePosition());
+                },
+                updatePosition() {
+                    const currentScroll = window.scrollY;
+                    const navbar = this.$el;
+                    
+                    if (currentScroll > this.navbarTop) {
+                        const transform = `translate3d(0, ${currentScroll}px, 0)`;
+                        navbar.style.transform = transform;
+                    } else {
+                        navbar.style.transform = 'translate3d(0, 0, 0)';
+                    }
+                    
+                    this.lastScrollY = currentScroll;
+                }
+             }"
+             x-init="init()">
+            <!-- Logo Section -->
+            <div class="logo">
+                <div class="logo-icon">
+                    <!-- SVG Icon -->
+                    <svg width="20" height="20" fill="white" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+                    </svg>
+                </div>
+                Entertainment Tracker
+            </div>
+            <!-- Sign In Link -->
+            <a href="{% url 'login' %}" class="sign-in">Sign In</a>
         </nav>
     </header>
+
     <main>
-        <section>
-            <h2>About Entertainment Tracker</h2>
-            <p>
-                Entertainment Tracker helps you keep track of your favorite books, movies, and shows.
-                Discover new recommendations based on your interests and connect with a community of enthusiasts.
-            </p>
-        </section>
-        <section>
-            <h2>Features</h2>
-            <ul>
-                <li>Track your reading and viewing history</li>
-                <li>Get personalized recommendations</li>
-                <li>Write and read reviews</li>
-                <li>Connect with friends and share experiences</li>
-            </ul>
-        </section>
-        <section>
-            <h2>How It Works</h2>
-            <p>
-                Entertainment Tracker allows you to track and review your favorite books, movies, and shows. Create an account to start building your personal entertainment library and receive personalized recommendations.
-            </p>
-            <a href="{% url 'create_account' %}" class="btn">Create Account</a>
+        <!-- Hero Section with Floating Posters -->
+        <section class="hero">
+            <div class="floating-posters" 
+                 x-data="{ 
+                    posters: [], 
+                    async loadPosters() {
+                        const [movies, anime] = await Promise.all([
+                            fetch('/api/trending-posters').then(r => r.json()),
+                            fetch('/api/trending-anime').then(r => r.json())
+                        ]);
+                        this.posters = [...movies, ...anime]
+                            .sort(() => Math.random() - 0.5)
+                            .slice(0, 6); // Reduce to 6 posters
+                    }
+                 }" 
+                 x-init="$nextTick(() => loadPosters())"
+                 x-cloak>
+                <template x-for="(poster, index) in posters" :key="index">
+                    <div class="floating-poster" 
+                         :style="{ 
+                             backgroundImage: `url(${poster.image_url})`,
+                             animationDelay: `${index * 4}s`,
+                             '--rotate': `${Math.random() * 30 - 15}deg`,
+                             '--x-pos': `${Math.random() * 100}%`,
+                             '--y-pos': `${Math.random() * 100}%`
+                         }">
+                    </div>
+                </template>
+            </div>
+            <div class="floating-poster-overlay"></div>
+            <div class="hero-content">
+                <h1>Track Your Entertainment Effortlessly</h1>
+                <p>Keep tabs on your favorite movies, shows, anime, and more—all in one place. Never lose track of what you're watching again.</p>
+                <div class="panel-menu" x-data="{ open: false }">
+                    <button @click="$store.panels.open = true" class="expand-button">
+                        Get Started Now
+                    </button>
+                    
+                    <div class="panel-container" 
+                         x-show="$store.panels.open" 
+                         x-init="$store.panels.open = false"
+                         @keydown.escape.window="$store.panels.open = false"
+                         @close-panels.window="$store.panels.open = false"
+                         x-transition.duration.300ms
+                         x-cloak>
+                        
+                        <button @click="$store.panels.open = false" class="close-panels">
+                            <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                            </svg>
+                        </button>
+
+                        <div class="panels">
+                            <a href="{% url 'shows' %}" class="panel panel-shows">
+                                <div class="panel-content">
+                                    <h2>Shows & Movies</h2>
+                                    <p>Track your favorite shows and movies</p>
+                                </div>
+                            </a>
+                            
+                            <a href="{% url 'animanga' %}" class="panel panel-anime">
+                                <div class="panel-content">
+                                    <h2>Anime & Manga</h2>
+                                    <p>Follow your anime watchlist and manga reading</p>
+                                </div>
+                            </a>
+                            
+                            <a href="{% url 'books' %}" class="panel panel-books">
+                                <div class="panel-content">
+                                    <h2>Books</h2>
+                                    <p>Keep track of your reading progress</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
     </main>
-    <footer>
-        <p>&copy; 2023 Entertainment Tracker</p>
-    </footer>
+
+    <!-- Features Section Highlighting Key Functionalities -->
+    <section class="features-section" x-data 
+             x-show="!$store.panels.open"
+             x-transition:enter="features-enter" 
+             x-transition:enter-start="features-enter-start" 
+             x-transition:enter-end="features-enter-end"
+             x-transition:leave="features-leave" 
+             x-transition:leave-start="features-leave-start" 
+             x-transition:leave-end="features-leave-end">
+        <!-- Feature 1: Track Progress -->
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg width="24" height="24" fill="white" viewBox="0 0 24 24">
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+            </div>
+            <h3 class="feature-title">Track Progress</h3>
+            <p class="feature-description">Keep track of what episode you're on, what chapter you're reading, and never lose your place again.</p>
+        </div>
+
+        <!-- Feature 2: Share with Friends -->
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg width="24" height="24" fill="white" viewBox="0 0 24 24">
+                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                </svg>
+            </div>
+            <h3 class="feature-title">Share with Friends</h3>
+            <p class="feature-description">Connect with friends, share recommendations, and discover new content through your social circle.</p>
+        </div>
+
+        <!-- Feature 3: Rate & Review -->
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg width="24" height="24" fill="white" viewBox="0 0 24 24">
+                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                </svg>
+            </div>
+            <h3 class="feature-title">Rate & Review</h3>
+            <p class="feature-description">Keep a personal record of your thoughts and ratings for everything you watch and read.</p>
+        </div>
+    </section>
+
+    <!-- Add Alpine.js store initialization before closing body tag -->
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('panels', {
+                open: false
+            })
+        })
+    </script>     
 </body>
 </html>
