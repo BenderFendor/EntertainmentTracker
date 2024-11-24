@@ -14,7 +14,6 @@
     <script src="//unpkg.com/alpinejs" defer></script>
     <script src="//unpkg.com/intersection-observer" defer></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <!-- ...existing head content... -->
 </head>
 <body>
     <header>
@@ -23,7 +22,6 @@
                 <div class="title-hamburger" @mouseleave="isMenuOpen = false">
                     <h1>Anime & Manga</h1>
                     <div class="hamburger-menu">
-                        <!-- ...existing menu content... -->
                     </div>
                 </div>
             </div>
@@ -40,127 +38,116 @@
 
     <main x-data="{ 
         searchQuery: '{{ query|default:"" }}',
-        format: '{{ format|default:"" }}',
-        sortBy: '{{ sort|default:"POPULARITY_DESC" }}',
         isLoading: false,
-        debounceTimeout: null,
-        isSearching: false,
+        currentPage: {{ page|default:1 }},
+        hasNextPage: {{ has_next_page|yesno:'true,false' }},
+
+        async handleSearch() {
+            if (this.debounceTimeout) clearTimeout(this.debounceTimeout);
+            
+            this.debounceTimeout = setTimeout(() => {
+                this.applyFilters();
+            }, 300);
+        },
 
         async applyFilters() {
-            const params = new URLSearchParams(window.location.search);
+            const params = new URLSearchParams();
             if (this.searchQuery) params.set('query', this.searchQuery);
-            if (this.format) params.set('format', this.format);
-            if (this.sortBy) params.set('sort', this.sortBy);
             window.location.search = params.toString();
         },
+
         handleScroll() {
             if ((window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 100) {
-                if (!this.isLoading && {{ page_info.hasNextPage|yesno:'true,false' }}) {
+                if (!this.isLoading && this.hasNextPage) {
                     this.loadMore();
                 }
             }
         },
+
         async loadMore() {
             if (this.isLoading) return;
-            
+            const nextPage = this.currentPage + 1;
             this.isLoading = true;
-            const nextPage = {{ page_info.currentPage }} + 1;
             
             try {
-                const response = await fetch(`?page=${nextPage}&query={{ query }}`);
+                const response = await fetch(
+                    `?page=${nextPage}&query=${this.searchQuery}`
+                );
                 const html = await response.text();
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
                 const newAnime = doc.querySelector('.anime-list').innerHTML;
                 this.$refs.animeList.insertAdjacentHTML('beforeend', newAnime);
+                this.currentPage = nextPage;
+                this.hasNextPage = doc.querySelector('main').__x.$data.hasNextPage;
             } catch (error) {
                 console.error('Error loading more anime:', error);
             } finally {
                 this.isLoading = false;
             }
-        },
-        async searchAnime() {
-            if (this.debounceTimeout) clearTimeout(this.debounceTimeout);
-            this.debounceTimeout = setTimeout(async () => {
-                if (this.searchQuery.length > 2) {
-                    this.isSearching = true;
-                    const response = await fetch(`?query=${this.searchQuery}`);
-                    const html = await response.text();
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    this.$refs.animeList.innerHTML = doc.querySelector('.anime-list').innerHTML;
-                    this.isSearching = false;
-                }
-            }, 300);
         }
-    }"
-    @scroll.window="handleScroll">
+    }" @scroll.window="handleScroll">
         <div class="searchbar">
-            <form @submit.prevent="searchAnime()">
+            <form @submit.prevent="handleSearch()">
                 <input type="text" 
                        x-model="searchQuery" 
-                       @input="searchAnime()"
+                       @input="handleSearch()"
                        placeholder="Search for anime..."
-                       :class="{ 'searching': isSearching }">
-                <button type="submit" 
-                        :disabled="isSearching"
-                        :class="{ 'searching': isSearching }">
-                    <i class="fas" :class="isSearching ? 'fa-spinner fa-spin' : 'fa-search'"></i>
-                </button>
+                       :class="{ 'searching': isLoading }">
             </form>
         </div>
         
-        <div class="filter-controls">
-            <select x-model="format" @change="applyFilters()">
-                <option value="">All Formats</option>
-                {% for format in filters.formats %}
-                <option value="{{ format }}">{{ format }}</option>
-                {% endfor %}
-            </select>
-
-            <select x-model="sortBy" @change="applyFilters()">
-                {% for value, label in filters.sorts %}
-                <option value="{{ value }}">{{ label }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
         <div class="anime-container">
-            <h1>{% if query %}Search Results{% else %}Popular Anime{% endif %}</h1>
-            
+            <template x-if="searchQuery">
+                <h1>Search Results for "<span x-text="searchQuery"></span>"</h1>
+            </template>
+            <template x-if="!searchQuery">
+                <h1>Trending Anime</h1>
+            </template>
+
             {% if error %}
                 <div class="error-message">{{ error }}</div>
-            {% elif not anime_list %}
-                <div class="no-results">No anime found</div>
             {% else %}
                 <div class="anime-list" x-ref="animeList">
-                    {% for anime in anime_list %}
+                    {% for anime in animanga_list %}
                         <div class="anime-item">
                             <div class="anime-cover-container">
                                 <img src="{{ anime.coverImage.large }}"
                                      alt="{{ anime.title.english|default:anime.title.romaji }}"
                                      class="anime-cover">
+                                {% if anime.nextAiringEpisode %}
+                                    <div class="airing-info">
+                                        EP {{ anime.nextAiringEpisode.episode }} in 
+                                        <span x-text="calculateDays({{ anime.nextAiringEpisode.timeUntilAiring }})"></span> days
+                                    </div>
+                                {% endif %}
                             </div>
                             <div class="anime-info">
                                 <h2 class="anime-title">{{ anime.title.english|default:anime.title.romaji }}</h2>
-                                <p class="anime-score">Score: {{ anime.averageScore|default:"N/A" }}%</p>
-                                <p class="anime-episodes">Episodes: {{ anime.episodes|default:"?" }}</p>
+                                {% if anime.averageScore %}
+                                    <p class="anime-score">Score: {{ anime.averageScore }}%</p>
+                                {% endif %}
+                                {% if anime.episodes %}
+                                    <p class="anime-episodes">Episodes: {{ anime.episodes }}</p>
+                                {% endif %}
                                 <div class="anime-genres">
                                     {% for genre in anime.genres|slice:":3" %}
                                         <span class="genre-tag">{{ genre }}</span>
                                     {% endfor %}
                                 </div>
+                                {% if anime.status %}
+                                    <p class="anime-status">Status: {{ anime.status }}</p>
+                                {% endif %}
                             </div>
                         </div>
                     {% endfor %}
                 </div>
             {% endif %}
         </div>
-        <div x-ref="loadingIndicator" class="loading-indicator" x-show="isLoading">
+        <div x-show="isLoading" class="loading-indicator">
             <div class="spinner"></div>
             Loading more anime...
         </div>
     </main>
-
 </body>
 </html>

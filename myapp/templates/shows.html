@@ -69,6 +69,8 @@
         isSearching: false,
         debounceTimeout: null,
         isLoading: false,
+        originalContent: null,
+        currentPage: parseInt('{{ current_page }}'),
         handleScroll() {
             if ((window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 100) {
                 if (!this.isLoading) {
@@ -78,19 +80,20 @@
         },
         async loadMore() {
             if (this.isLoading) return;
-            const nextPage = parseInt('{{ current_page }}') + 1;
+            const nextPage = this.currentPage + 1;
             if (nextPage > parseInt('{{ total_pages }}')) return;
             
             this.isLoading = true;
             try {
                 const response = await fetch(
-                    `?page=${nextPage}&query={{ query }}&category={{ category }}&genre={{ genre }}`
+                    `?page=${nextPage}&query=${this.searchQuery}&category={{ category }}&genre={{ genre }}`
                 );
                 const html = await response.text();
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
                 const newMovies = doc.querySelector('.movie-list').innerHTML;
                 this.$refs.movieList.insertAdjacentHTML('beforeend', newMovies);
+                this.currentPage = nextPage;
             } catch (error) {
                 console.error('Error loading more movies:', error);
             } finally {
@@ -99,15 +102,28 @@
         },
         async searchShows() {
             if (this.debounceTimeout) clearTimeout(this.debounceTimeout);
+            
             this.debounceTimeout = setTimeout(async () => {
                 if (this.searchQuery.length > 2) {
                     this.isSearching = true;
+                    if (!this.originalContent) {
+                        this.originalContent = {
+                            content: this.$refs.movieList.innerHTML,
+                            page: this.currentPage
+                        };
+                    }
                     const response = await fetch(`?query=${this.searchQuery}`);
                     const html = await response.text();
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
                     this.$refs.movieList.innerHTML = doc.querySelector('.movie-list').innerHTML;
+                    this.currentPage = 1; // Reset page number for new search
                     this.isSearching = false;
+                } else if (this.searchQuery.length === 0 && this.originalContent) {
+                    // Restore original content and pagination when search is cleared
+                    this.$refs.movieList.innerHTML = this.originalContent.content;
+                    this.currentPage = this.originalContent.page;
+                    this.originalContent = null;
                 }
             }, 300);
         }
@@ -128,8 +144,18 @@
             </form>
         </div>
         <div class="shows-container">
-            <h1>{% if query %}Search Results{% else %}{{ description }}{% endif %}</h1>
-            <p>{% if query %}Results for "{{ query }}"{% else %}Discover the latest and most {{ description|lower }} to watch.{% endif %}</p>
+            <template x-if="searchQuery">
+                <h1>Search Results for "<span x-text="searchQuery"></span>"</h1>
+            </template>
+            <template x-if="!searchQuery">
+                <h1>{{ description }}</h1>
+            </template>
+            <template x-if="searchQuery">
+                <p>Showing results for your search</p>
+            </template>
+            <template x-if="!searchQuery">
+                <p>Discover the latest and most {{ description|lower }} to watch.</p>
+            </template>
             <div class="movie-list" x-ref="movieList">
                 {% for movie in movies %}
                     <div class="movie-item">

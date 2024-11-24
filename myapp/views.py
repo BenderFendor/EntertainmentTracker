@@ -1,4 +1,5 @@
 import requests
+import json
 from django.conf import settings
 from django.contrib import messages
 from django.shortcuts import render, redirect
@@ -194,94 +195,56 @@ def login_view(request):
 def animanga(request):
     query = request.GET.get('query', '')
     page = request.GET.get('page', 1)
-    format_type = request.GET.get('format', '')
-    sort_by = request.GET.get('sort', 'POPULARITY_DESC')
-    
+    limit = 20
+
+    url = "https://graphql.anilist.co"
+    headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+    }
     query_string = '''
-    query ($page: Int, $perPage: Int, $search: String, $type: MediaType, $format: MediaFormat, $sort: [MediaSort]) {
-        Page(page: $page, perPage: $perPage) {
-            pageInfo {
-                total
-                currentPage
-                lastPage
-                hasNextPage
-            }
-            media(type: ANIME, search: $search, format: $format, sort: $sort) {
-                id
-                title {
-                    english
-                    romaji
-                }
-                coverImage {
-                    large
-                }
-                description(asHtml: true)
-                genres
-                averageScore
-                episodes
-                format
-                status
-                startDate {
-                    year
-                }
-            }
+    query ($page: Int = 1) {
+    Page(page: $page, perPage: 20) {
+        pageInfo {
+        hasNextPage
+        currentPage
         }
+        media(type: ANIME, sort: TRENDING_DESC) {
+        id
+        episodes
+        averageScore
+        format
+        coverImage {
+            large
+        }
+        title {
+            english
+            romaji
+        }
+        }
+    }
     }
     '''
-    
     variables = {
-        'search': query,
-        'page': int(page),
-        'perPage': 20,
-        'type': 'ANIME',
-        'format': format_type if format_type else None,
-        'sort': [sort_by]
+        'page': int(page)
     }
 
-    try:
-        response = requests.post(
-            'https://graphql.anilist.co',
-            json={
-                'query': query_string,
-                'variables': variables
-            },
-            headers={
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            }
-        )
-        response.raise_for_status()
-        data = response.json()
+    response = requests.post(url, headers=headers, json={'query': query_string, 'variables': variables})
+    data = response.json()
+    print(data)
 
-        if 'errors' in data:
-            print("API Errors:", data['errors'])
-            return render(request, 'animanga.html', {
-                'error': data['errors'][0]['message'],
-                'anime_list': [],
-                'page_info': {},
-                'filters': get_anime_filters()  # Add filter options even when there's an error
-            })
+    if 'errors' in data:
+        messages.error(request, 'Failed to retrieve data from AniList.')
+        animanga_list = []
+    else:
+        animanga_list = data['data']['Page']['media']
 
-        anime_data = data.get('data', {}).get('Page', {})
-        
-        context = {
-            'anime_list': anime_data.get('media', []),
-            'page_info': anime_data.get('pageInfo', {}),
-            'query': query,
-            'format': format_type,
-            'sort': sort_by,
-            'filters': get_anime_filters()
-        }
-        return render(request, 'animanga.html', context)
-        
-    except requests.RequestException as e:
-        print(f"Request error: {e}")
-        return render(request, 'animanga.html', {
-            'error': f"Failed to fetch anime: {str(e)}",
-            'anime_list': [],
-            'page_info': {},
-            'filters': get_anime_filters()
-        })
+    return render(request, 'animanga.html', {
+        'animanga_list': animanga_list,
+        'query': query,
+        'page': page,
+        'has_next_page': data['data']['Page']['pageInfo']['hasNextPage']
+    })
 
 def get_anime_filters():
     return {
@@ -293,7 +256,7 @@ def get_anime_filters():
             ('START_DATE_DESC', 'Newest')
         ]
     }
-
+    
 def animanga_view(request):
     # ...existing code...
     return render(request, 'animanga.html')
