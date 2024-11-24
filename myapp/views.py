@@ -161,46 +161,7 @@ def movie_detail(request, movie_id):
         context = {}
         messages.error(request, 'Failed to retrieve movie details.')
     
-    return render(request, 'infopage.html', context)
-
-def anime_detail(request, anime_id):
-    api_key = settings.TMDB_API_KEY
-    headers = {
-        "accept": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
-    
-    # Get anime details
-    anime_url = f"https://api.themoviedb.org/3/anime/{anime_id}?language=en-US&append_to_response=credits,videos,similar"
-    response = requests.get(anime_url, headers=headers)
-    
-    if response.status_code == 200:
-        anime = response.json()
-        
-        # Process credits data
-        credits = anime.get('credits', {})
-        
-        # Get director
-        directors = [crew for crew in credits.get('crew', []) if crew['job'] == 'Director']
-        
-        # Get main cast (limit to top 6)
-        cast = credits.get('cast', [])[:6]
-        
-        # Format genres
-        genres = [genre['name'] for genre in anime.get('genres', [])]
-        
-        context = {
-            'anime': anime,
-            'directors': directors,
-            'cast': cast,
-            'genres': genres,
-            'similar_anime': anime.get('similar', {}).get('results', [])[:4]
-        }
-    else:
-        context = {}
-        messages.error(request, 'Failed to retrieve anime details.')
-    
-    return render(request, 'infopage.html', context)
+    return render(request, 'showsinfo.html', context)
 
 def account(request):
     return render(request, 'account')
@@ -320,8 +281,248 @@ def get_anime_filters():
     }
     
 def animanga_view(request):
-    # ...existing code...
     return render(request, 'animanga.html')
 
-def animanga_Detal(request):
-    return render(request, 'infopage.html')
+def animanga_detail(request, anime_id):
+    query_string = '''
+    query ($id: Int) {
+    Media(id: $id, type: ANIME) {
+        id
+        title {
+        romaji
+        english
+        native
+        }
+        description
+        startDate {
+        year
+        month
+        day
+        }
+        endDate {
+        year
+        month
+        day
+        }
+        season
+        seasonYear
+        episodes
+        duration
+        status
+        averageScore
+        meanScore
+        popularity
+        favourites
+        format
+        genres
+        tags {
+        name
+        description
+        category
+        rank
+        isGeneralSpoiler
+        isMediaSpoiler
+        isAdult
+        }
+        studios {
+        edges {
+            node {
+            id
+            name
+            siteUrl
+            }
+            isMain
+        }
+        }
+        staff {
+        edges {
+            node {
+            id
+            name {
+                full
+                native
+            }
+            language
+            primaryOccupations
+            image {
+                large
+            }
+            siteUrl
+            }
+            role
+        }
+        }
+        characters {
+        edges {
+            node {
+            id
+            name {
+                full
+                native
+            }
+            image {
+                large
+            }
+            description
+            siteUrl
+            }
+            role
+            voiceActors(language: JAPANESE) {
+            id
+            name {
+                full
+                native
+            }
+            language
+            image {
+                large
+            }
+            siteUrl
+            }
+        }
+        }
+        relations {
+        edges {
+            node {
+            id
+            title {
+                romaji
+                english
+            }
+            type
+            format
+            status
+            coverImage {
+                large
+            }
+            siteUrl
+            }
+            relationType
+        }
+        }
+        recommendations {
+        edges {
+            node {
+            mediaRecommendation {
+                id
+                title {
+                romaji
+                english
+                }
+                format
+                status
+                averageScore
+                popularity
+                coverImage {
+                large
+                }
+                siteUrl
+            }
+            rating
+            userRating
+            }
+        }
+        }
+        trailer {
+        id
+        site
+        thumbnail
+        }
+        siteUrl
+        nextAiringEpisode {
+        airingAt
+        timeUntilAiring
+        episode
+        }
+        streamingEpisodes {
+        title
+        thumbnail
+        url
+        site
+        }
+        reviews {
+        nodes {
+            id
+            summary
+            rating
+            ratingAmount
+            user {
+            id
+            name
+            avatar {
+                large
+            }
+            siteUrl
+            }
+            siteUrl
+        }
+        }
+        rankings {
+        id
+        rank
+        type
+        format
+        year
+        season
+        allTime
+        context
+        }
+        coverImage {
+        extraLarge
+        }
+        bannerImage
+        externalLinks {
+        id
+        site
+        url
+        type
+        language
+        color
+        icon
+        notes
+        isDisabled
+        }
+        source
+        hashtag
+        updatedAt
+    }
+    }
+    '''
+    
+    variables = {
+        'id': anime_id
+    }
+
+    try:
+        headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'User-Agent': 'Entertainment Tracker/1.0'
+        }
+        response = requests.post(
+            'https://graphql.anilist.co',
+            json={
+                'query': query_string,
+                'variables': variables
+            },
+            headers=headers
+        )
+        
+        response.raise_for_status()
+        data = response.json()
+        
+        if 'errors' in data:
+            return render(request, 'showsinfo.html', {
+                'error': data['errors'][0]['message']
+            })
+
+        context = {
+            'Media': data['data']['Media']
+        }
+
+    except requests.RequestException as e:
+        return render(request, 'animangainfo.html', {
+            'error': f"Failed to fetch anime: {str(e)}"
+        })
+
+    return render(request, 'animangainfo.html', context)

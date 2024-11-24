@@ -1,0 +1,353 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ title }}</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'styles.css' %}">
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>
+                {% if movie %}
+                    {{ movie.title }} ({{ movie.release_date|slice:":4" }})
+                {% else %}
+                    {{ Media.title.english }} ({{ Media.startDate.year }})
+                {% endif %}
+            </h1>
+            <nav>
+                <ul>
+                    <li><a href="{% url 'main_page' %}">Home</a></li>
+                    {% if movie %}
+                        <li><a href="{% url 'shows' %}">Back to Shows</a></li>
+                    {% else %}
+                        <li><a href="{% url 'animanga' %}">Back to Anime</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="info-page-container">
+            <div class="info-grid">
+                <div class="info-card poster-card">
+                    {% if movie %}
+                        <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" alt="{{ movie.title }} Poster" class="movie-poster">
+                    {% else %}
+                        <img src="{{ Media.coverImage.extraLarge }}" alt="{{ Media.title.english }} Cover" class="movie-poster">
+                    {% endif %}
+                    <button 
+                        class="add-to-watchlist-large" 
+                        x-data="{ status: false }" 
+                        @click="status = !status" 
+                        :class="{ 'active': status }"
+                    ></button>
+                    <h3>Description</h3>
+                    <p>{{ Media.description|safe }}</p>
+                </div>
+            </div>
+
+            <!-- Combined Cast & Related Content Card -->
+            <div class="info-card combined-card" x-data="{ 
+                activeTab: 'details',
+                isLoading: false,
+                showSpoilers: false,
+                watchlistStatus: false,
+                
+                switchTab(tabName) {
+                    this.isLoading = true;
+                    this.activeTab = tabName;
+                    setTimeout(() => this.isLoading = false, 300);
+                },
+                
+                toggleSpoilers() {
+                    this.showSpoilers = !this.showSpoilers;
+                },
+                
+                toggleWatchlist() {
+                    this.watchlistStatus = !this.watchlistStatus;
+                    // Here you could add actual API call to update watchlist
+                }
+            }">
+                <div class="section-tabs">
+                    <button 
+                        class="tab-btn" 
+                        :class="{ 'active': activeTab === 'details' }"
+                        @click="switchTab('details')"
+                    >Details</button>
+                    <button 
+                        class="tab-btn" 
+                        :class="{ 'active': activeTab === 'streaming' }"
+                        @click="switchTab('streaming')"
+                    >Watch</button>
+                    <button 
+                        class="tab-btn" 
+                        :class="{ 'active': activeTab === 'related' }"
+                        @click="switchTab('related')"
+                    >Related</button>
+                    <button 
+                        class="tab-btn" 
+                        :class="{ 'active': activeTab === 'recommendations' }"
+                        @click="switchTab('recommendations')"
+                    >Recommendations</button>
+                    <button 
+                        class="tab-btn" 
+                        :class="{ 'active': activeTab === 'reviews' }"
+                        @click="switchTab('reviews')"
+                    >Reviews</button>
+                    <button 
+                        class="tab-btn" 
+                        :class="{ 'active': activeTab === 'external' }"
+                        @click="switchTab('external')"
+                    >External Links</button>
+                </div>
+
+                <!-- Loading indicator -->
+                <div x-show="isLoading" class="loading-indicator">
+                    <div class="spinner"></div>
+                    <span>Loading...</span>
+                </div>
+
+                <!-- Tab content with transitions -->
+                <div class="tab-content" x-show="!isLoading">
+                    <!-- Details Tab -->
+                    <div 
+                        class="tab-pane" 
+                        :class="{ 'active': activeTab === 'details' }"
+                        x-show.transition.opacity.duration.300="activeTab === 'details'"
+                    >
+                        <!-- Staff Section -->
+                        <div class="credits-section">
+                            <h2>Staff</h2>
+                            <div class="cast-grid">
+                                {% for edge in Media.staff.edges %}
+                                    <div class="cast-member">
+                                        <img src="{{ edge.node.image.large }}" alt="{{ edge.node.name.full }}">
+                                        <div class="actor-info">
+                                            <span class="actor-name">{{ edge.node.name.full }}</span>
+                                            <span class="character-name">{{ edge.role }}</span>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Characters Section -->
+                        <div class="credits-section">
+                            <h2>Characters</h2>
+                            <div class="cast-grid">
+                                {% for edge in Media.characters.edges %}
+                                    <div class="cast-member">
+                                        <img src="{{ edge.node.image.large }}" alt="{{ edge.node.name.full }}">
+                                        <div class="actor-info">
+                                            <span class="actor-name">{{ edge.node.name.full }}</span>
+                                            <span class="character-name">{{ edge.role }}</span>
+                                            {% if edge.voiceActors %}
+                                            <span class="va-name">VA: {{ edge.voiceActors.0.name.full }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Streaming Tab -->
+                    <div 
+                        class="tab-pane" 
+                        :class="{ 'active': activeTab === 'streaming' }"
+                        x-show.transition.opacity.duration.300="activeTab === 'streaming'"
+                    >
+                        <div class="streaming-episodes">
+                            {% for episode in Media.streamingEpisodes %}
+                                <div class="episode-item">
+                                    <img src="{{ episode.thumbnail }}" alt="{{ episode.title }}">
+                                    <div class="episode-info">
+                                        <h3>{{ episode.title }}</h3>
+                                        <a href="{{ episode.url }}" class="watch-btn" target="_blank">Watch on {{ episode.site }}</a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Related Tab -->
+                    <div 
+                        class="tab-pane" 
+                        :class="{ 'active': activeTab === 'related' }"
+                        x-show.transition.opacity.duration.300="activeTab === 'related'"
+                    >
+                        <div class="related-grid">
+                            {% for edge in Media.relations.edges %}
+                                <div class="related-item">
+                                    <img src="{{ edge.node.coverImage.large }}" alt="{{ edge.node.title.english }}">
+                                    <div class="related-info">
+                                        <h3>{{ edge.node.title.english }}</h3>
+                                        <span class="relation-type">{{ edge.relationType }}</span>
+                                        <a href="{{ edge.node.siteUrl }}" class="more-info-btn" target="_blank">More Info</a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Recommendations Tab -->
+                    <div 
+                        class="tab-pane" 
+                        :class="{ 'active': activeTab === 'recommendations' }"
+                        x-show.transition.opacity.duration.300="activeTab === 'recommendations'"
+                    >
+                        <div class="recommendations-grid">
+                            {% for edge in Media.recommendations.edges %}
+                                <div class="recommendation-item">
+                                    <img src="{{ edge.node.mediaRecommendation.coverImage.large }}" 
+                                         alt="{{ edge.node.mediaRecommendation.title.english }}">
+                                    <div class="recommendation-info">
+                                        <h3>{{ edge.node.mediaRecommendation.title.english }}</h3>
+                                        <div class="recommendation-metadata">
+                                            <span>Format: {{ edge.node.mediaRecommendation.format }}</span>
+                                            <span>Score: {{ edge.node.mediaRecommendation.averageScore }}%</span>
+                                            <span>Status: {{ edge.node.mediaRecommendation.status }}</span>
+                                        </div>
+                                        <div class="recommendation-stats">
+                                            <span>Rating: {{ edge.node.rating }}</span>
+                                            <span>Popularity: {{ edge.node.mediaRecommendation.popularity }}</span>
+                                        </div>
+                                        <a href="{{ edge.node.mediaRecommendation.siteUrl }}" 
+                                           class="more-info-btn" target="_blank">View Details</a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Reviews Tab -->
+                    <div 
+                        class="tab-pane" 
+                        :class="{ 'active': activeTab === 'reviews' }"
+                        x-show.transition.opacity.duration.300="activeTab === 'reviews'"
+                    >
+                        <div class="reviews-container">
+                            {% for review in Media.reviews.nodes %}
+                                <div class="review-card">
+                                    <div class="review-header">
+                                        <img src="{{ review.user.avatar.large }}" 
+                                             alt="{{ review.user.name }}" 
+                                             class="reviewer-avatar">
+                                        <div class="reviewer-info">
+                                            <a href="{{ review.user.siteUrl }}" 
+                                               target="_blank">{{ review.user.name }}</a>
+                                            <div class="review-stats">
+                                                <span>Rating: {{ review.rating }}/100</span>
+                                                <span>Likes: {{ review.ratingAmount }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="review-content">
+                                        <p class="review-summary">{{ review.summary }}</p>
+                                        <a href="{{ review.siteUrl }}" 
+                                           target="_blank" 
+                                           class="read-more-btn">Read Full Review</a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- External Links Tab -->
+                    <div 
+                        class="tab-pane" 
+                        :class="{ 'active': activeTab === 'external' }"
+                        x-show.transition.opacity.duration.300="activeTab === 'external'"
+                    >
+                        <div class="external-links-container">
+                            <div class="streaming-services">
+                                <h3>Streaming Services</h3>
+                                <div class="external-links-grid">
+                                    {% for link in Media.externalLinks %}
+                                        {% if link.type == "STREAMING" %}
+                                            <a href="{{ link.url }}" 
+                                               target="_blank" 
+                                               class="external-link-card" 
+                                               class="{% if link.color %}custom-bg{% endif %}" data-bg-color="{{ link.color }}">
+                                                {% if link.icon %}
+                                                    <img src="{{ link.icon }}" alt="{{ link.site }}">
+                                                {% endif %}
+                                                <span>{{ link.site }}</span>
+                                                {% if link.language %}
+                                                    <span class="language-tag">{{ link.language }}</span>
+                                                {% endif %}
+                                            </a>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <div class="info-sites">
+                                <h3>Information Sites</h3>
+                                <div class="external-links-grid">
+                                    {% for link in Media.externalLinks %}
+                                        {% if link.type == "INFO" %}
+                                            <a href="{{ link.url }}" 
+                                               target="_blank" 
+                                               class="external-link-card">
+                                                <span>{{ link.site }}</span>
+                                            </a>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rankings Section -->
+                        <div class="rankings-section">
+                            <h3>Rankings</h3>
+                            <div class="rankings-grid">
+                                {% for rank in Media.rankings %}
+                                    <div class="ranking-card">
+                                        <span class="rank-number">#{{ rank.rank }}</span>
+                                        <span class="rank-context">{{ rank.context }}</span>
+                                        {% if rank.year %}
+                                            <span class="rank-year">{{ rank.year }}</span>
+                                        {% endif %}
+                                        {% if rank.season %}
+                                            <span class="rank-season">{{ rank.season }}</span>
+                                        {% endif %}
+                                        <span class="rank-type">{{ rank.format }}</span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Tags Section -->
+                        <div class="tags-section">
+                            <h3>Tags</h3>
+                            <button 
+                                class="spoiler-toggle"
+                                @click="toggleSpoilers"
+                                x-text="showSpoilers ? 'Hide Spoilers' : 'Show Spoilers'"
+                            >
+                            </button>
+                            <div class="tags-grid">
+                                <template x-for="tag in {{ Media.tags|safe }}" :key="tag.name">
+                                    <div 
+                                        class="tag-card"
+                                        :class="{ 'spoiler': tag.isMediaSpoiler && !showSpoilers }"
+                                        x-show="!tag.isMediaSpoiler || showSpoilers"
+                                    >
+                                        <span class="tag-name" x-text="tag.name"></span>
+                                        <span class="tag-rank" x-text="'Rank: ' + tag.rank + '%'"></span>
+                                        <span class="tag-category" x-text="tag.category"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

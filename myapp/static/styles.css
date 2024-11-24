@@ -1380,3 +1380,127 @@ searchbar button:active {
     z-index: 2;
     box-shadow: 2px 2px rgba(0, 0, 0, 0.1);
 }
+
+/* Recommendations Styles */
+.recommendations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.recommendation-item {
+    background-color: var(--card-background-dark-color);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+.recommendation-item:hover {
+    transform: translateY(-5px);
+}
+
+.recommendation-info {
+    padding: 15px;
+}
+
+/* Reviews Styles */
+.reviews-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.review-card {
+    background-color: var(--card-background-dark-color);
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.review-header {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.reviewer-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 25px;
+}
+
+/* External Links Styles */
+.external-links-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.external-links-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.external-link-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    background-color: var(--card-background-dark-color);
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text-color);
+    transition: transform 0.2s ease;
+}
+
+.external-link-card:hover {
+    transform: translateY(-3px);
+}
+
+/* Rankings Styles */
+.rankings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.ranking-card {
+    background-color: var(--card-background-dark-color);
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+/* Tags Styles */
+.tags-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.tag-card {
+    background-color: var(--card-background-dark-color);
+    padding: 12px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.tag-card.spoiler {
+    opacity: 0.7;
+    position: relative;
+}
+
+.tag-card.spoiler::before {
+    content: "SPOILER";
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 10px;
+    background-color: var(--primary-color);
+    padding: 2px 5px;
+    border-radius: 4px;
+}
