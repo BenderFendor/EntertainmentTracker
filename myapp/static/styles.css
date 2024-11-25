@@ -449,7 +449,42 @@ footer {
 }
 
 .add-to-watchlist {
-    z-index: 3; /* Ensure it's above the gradient overlay */
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(0, 0, 0, 0.7);
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.add-to-watchlist i {
+    color: white;
+    font-size: 16px;
+    transition: transform 0.3s ease;
+}
+
+.add-to-watchlist:hover {
+    background-color: rgba(0, 0, 0, 0.9);
+}
+
+.add-to-watchlist:hover i {
+    transform: scale(1.2);
+}
+
+.add-to-watchlist.in-watchlist {
+    background-color: #4CAF50;
+}
+
+.add-to-watchlist.adding {
+    opacity: 0.7;
+    pointer-events: none;
 }
 
 .movie-item:hover {
@@ -2573,4 +2608,148 @@ footer {
     background-color: var(--accent-color);
     color: var(--text-color);
     font-weight: bold;
+}
+
+.watchlist-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.watchlist-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.watchlist-tabs button {
+    padding: 10px 20px;
+    background: var(--card-background-color);
+    border: none;
+    border-radius: 8px;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.watchlist-tabs button.active {
+    background: var(--primary-color);
+}
+
+.watchlist-item {
+    display: flex;
+    gap: 20px;
+    background: var(--card-background-color);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.watchlist-item img {
+    width: 100px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.progress-tracker {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.progress-tracker input {
+    width: 60px;
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background: var(--card-background-dark-color);
+    color: var(--text-color);
+
+.notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.notification-toast {
+    background-color: #4caf50;
+    color: white;
+    padding: 15px 20px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    opacity: 0;
+}
+
+/* Notification Styles */
+.notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.notification {
+    background: var(--accent-color);
+    color: var(--text-color);
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    font-family: "League Spartan", sans-serif;
+    font-size: 16px;
+    min-width: 200px;
+    max-width: 350px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    will-change: transform, opacity;
+    transform: translateZ(0);
+}
+
+.notification.error {
+    background: #ef4444;
+}
+
+/* Notification Animation Classes */
+.transition {
+    transition-property: all;
+}
+
+.duration-300 {
+    transition-duration: 300ms;
+}
+
+.ease-out {
+    transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+
+.ease-in {
+    transition-timing-function: cubic-bezier(0.4, 0, 1, 1);
+}
+
+.transform {
+    transform: translateZ(0);
+}
+
+.translate-y-2 {
+    transform: translateY(8px);
+}
+
+.opacity-0 {
+    opacity: 0;
+}
+
+.opacity-100 {
+    opacity: 1;
+}
+
+/* ...existing code... */
+
 }

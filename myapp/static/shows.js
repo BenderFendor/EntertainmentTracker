@@ -55,6 +55,8 @@ function showsApp() {
         page: 1,
         totalPages: 1,
         genres: [],
+        isAddingToWatchlist: false,
+        watchlistItems: [],
 
         /**
          * Initialize the component
@@ -268,6 +270,57 @@ function showsApp() {
             } finally {
                 this.isLoading = false;
             }
+        },
+
+        async addToWatchlist(item) {
+            console.log('Starting addToWatchlist:', item);
+            this.isAddingToWatchlist = true;
+
+            try {
+                const response = await fetch('/api/watchlist/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify(item)
+                });
+
+                console.log('API Response status:', response.status);
+                const responseText = await response.text();
+                console.log('API Response text:', responseText);
+
+                const result = JSON.parse(responseText);
+                console.log('Parsed result:', result);
+
+                if (result.status === 'success') {
+                    console.log('Showing success notification for:', item.title);
+                    this.showNotification(`Added "${item.title}" to watchlist`);
+                    this.watchlistItems.push(item.media_id);
+                }
+            } catch (error) {
+                console.error('Error in addToWatchlist:', error);
+                this.showNotification('Error adding to watchlist', 'error');
+            } finally {
+                this.isAddingToWatchlist = false;
+            }
+        },
+
+        showNotification(message, type = 'success') {
+            console.log('showNotification called:', { message, type });
+            const event = new CustomEvent('show-notification', {
+                detail: {
+                    message,
+                    id: Date.now(),
+                    type
+                }
+            });
+            console.log('Dispatching event:', event);
+            window.dispatchEvent(event);
+        },
+
+        isInWatchlist(mediaId) {
+            return this.watchlistItems.includes(mediaId);
         }
     };
 }

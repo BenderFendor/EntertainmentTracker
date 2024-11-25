@@ -6,7 +6,63 @@ from django.shortcuts import render, redirect
 import boto3
 from django.core.paginator import Paginator
 import os
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.http import require_http_methods
+from .models import WatchlistItem
+import logging
+
+logger = logging.getLogger(__name__)
+
+# TODO: Add proper user authentication system
+# For now, using a dummy user ID for development
+
+def watchlist(request):
+    items = WatchlistItem.objects.filter(user='dummy_user')
+    return render(request, 'watchlist.html', {'items': items})
+
+@require_http_methods(['GET'])
+def get_watchlist(request):
+    logger.debug('Getting watchlist for dummy user')
+    items = WatchlistItem.objects.filter(user='dummy_user').values()
+    logger.debug('Found %d items in watchlist', len(items))
+    return JsonResponse(list(items), safe=False)
+
+@require_http_methods(['POST'])
+def update_watchlist(request):
+    data = json.loads(request.body)
+    try:
+        item = WatchlistItem.objects.get(id=data['id'], user='dummy_user')
+        item.status = data['status']
+        item.progress = data['progress']
+        item.save()
+        return JsonResponse({'status': 'success'})
+    except WatchlistItem.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Item not found.'}, status=404)
+
+@require_http_methods(['POST'])
+def add_to_watchlist(request):
+    logger.debug('Adding to watchlist for dummy user')
+    try:
+        data = json.loads(request.body)
+        logger.debug('Received data: %s', data)
+        
+        item, created = WatchlistItem.objects.get_or_create(
+            user='dummy_user',
+            media_id=data['media_id'],
+            defaults={
+                'media_type': data['media_type'],
+                'title': data['title'],
+                'poster_path': data['poster_path'],
+                'status': 'plan_to_watch',
+                'progress': 0,
+                'total_episodes': data.get('total_episodes')
+            }
+        )
+        logger.debug('Item %s: %s', 'created' if created else 'updated', item.id)
+        return JsonResponse({'status': 'success', 'item_id': item.id})
+    except Exception as e:
+        logger.error('Error adding to watchlist: %s', str(e), exc_info=True)
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 def get_genre_id(genre_name):
     genre_mapping = {
@@ -30,7 +86,7 @@ def books(request):
     limit = 20
 
     try:
-        if query:
+        if (query):
             # Search for books with specific fields to reduce payload
             url = "https://openlibrary.org/search.json"
             params = {
