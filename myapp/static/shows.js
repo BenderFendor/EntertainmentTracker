@@ -64,7 +64,6 @@ function showsApp() {
          */
         init() {
             // Force GPU acceleration for animations
-            document.querySelector('.frost-glow').style.transform = 'translate3d(0,0,0)';
             document.querySelector('.movie-list').style.transform = 'translate3d(0,0,0)';
             
             // Enable passive event listeners for better scroll performance
@@ -179,30 +178,6 @@ function showsApp() {
         },
 
         /**
-         * Optimized mouse position tracking for glow effect
-         * Uses RequestAnimationFrame for smooth animation
-         */
-        updateMousePosition(event) {
-            if (this.isAnyItemHovered) {
-                requestAnimationFrame(() => {
-                    this.mouseX = event.clientX;
-                    this.mouseY = event.clientY;
-                    this.updateGlowPosition();
-                });
-            }
-        },
-
-        /**
-         * Update glow effect position with hardware acceleration
-         */
-        updateGlowPosition() {
-            const glow = document.querySelector('.frost-glow');
-            if (glow) {
-                glow.style.transform = `translate3d(${this.mouseX}px, ${this.mouseY}px, 0)`;
-            }
-        },
-
-        /**
          * Optimized search functionality with debouncing
          * Uses AbortController for request cancellation
          */
@@ -307,16 +282,13 @@ function showsApp() {
         },
 
         showNotification(message, type = 'success') {
-            console.log('showNotification called:', { message, type });
-            const event = new CustomEvent('show-notification', {
+            window.dispatchEvent(new CustomEvent('show-notification', {
                 detail: {
                     message,
-                    id: Date.now(),
-                    type
+                    type,
+                    id: Date.now()
                 }
-            });
-            console.log('Dispatching event:', event);
-            window.dispatchEvent(event);
+            }));
         },
 
         isInWatchlist(mediaId) {
