@@ -135,6 +135,7 @@ AWS_COGNITO_REGION = os.getenv('AWS_COGNITO_REGION')
 
 # TMDB API Key
 TMDB_API_KEY = os.getenv('TMDB_API_KEY')
+GOOGLE_BOOKS_API_KEY = os.getenv('GOOGLE_BOOKS_API_KEY')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field

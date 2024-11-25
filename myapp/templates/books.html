@@ -62,56 +62,56 @@
         isSearching: false,
         debounceTimeout: null,
         isLoading: false,
-        handleScroll() {
-            if ((window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 100) {
-                if (!this.isLoading) {
-                    this.loadMore();
-                }
-            }
+        books: [],
+        startIndex: 0,
+        maxResults: 20,
+        async initializeBooks() {
+            // Load initial trending books
+            await this.fetchBooks('subject:fiction', true);
         },
-        async loadMore() {
-            if (this.isLoading) return;
-            
+        async fetchBooks(query, isInitial = false) {
             this.isLoading = true;
-            const nextPage = this.currentPage + 1;
-            
             try {
-                const response = await fetch(
-                    `?page=${nextPage}&q={{ searchQuery }}`
-                );
-                const html = await response.text();
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const newBooks = doc.querySelector('.book-list').innerHTML;
-                this.$refs.bookList.insertAdjacentHTML('beforeend', newBooks);
-                this.currentPage = nextPage;
+                const apiKey = 'YOUR_GOOGLE_API_KEY'; // Replace with your actual API key
+                const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&startIndex=${this.startIndex}&maxResults=${this.maxResults}&key=${apiKey}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (isInitial || this.searchQuery.length > 0) {
+                    this.books = data.items || [];
+                } else {
+                    this.books = [...this.books, ...(data.items || [])];
+                }
+                this.startIndex += this.maxResults;
             } catch (error) {
-                console.error('Error loading more books:', error);
+                console.error('Error fetching books:', error);
             } finally {
                 this.isLoading = false;
             }
         },
-        async searchBooks() {
+        async handleSearch() {
             if (this.debounceTimeout) clearTimeout(this.debounceTimeout);
             this.debounceTimeout = setTimeout(async () => {
                 if (this.searchQuery.length > 2) {
-                    this.isSearching = true;
-                    const response = await fetch(`?q=${this.searchQuery}`);
-                    const html = await response.text();
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    this.$refs.bookList.innerHTML = doc.querySelector('.book-list').innerHTML;
-                    this.isSearching = false;
+                    this.startIndex = 0;
+                    await this.fetchBooks(this.searchQuery, true);
                 }
             }, 300);
+        },
+        async loadMore() {
+            if (!this.isLoading) {
+                const query = this.searchQuery || 'subject:fiction';
+                await this.fetchBooks(query);
+            }
         }
     }"
-    @scroll.window="handleScroll">
+    @scroll.window="handleScroll"
+    x-init="initializeBooks()">
         <div class="searchbar">
-            <form @submit.prevent="searchBooks()">
+            <form @submit.prevent="handleSearch()">
                 <input type="text" 
                        x-model="searchQuery" 
-                       @input="searchBooks()"
+                       @input="handleSearch()"
                        placeholder="Search for books..."
                        :class="{ 'searching': isSearching }">
                 <button type="submit" 
@@ -125,39 +125,33 @@
         <div class="books-container">
             <h1>Trending Books</h1>
             <div class="book-list" x-ref="bookList">
-                {% for book in books %}
+                <template x-for="book in books" :key="book.id">
                     <div class="book-item" 
                          x-data="{ imageLoaded: false, imageError: false }"
                          x-transition:enter="fade-enter"
                          x-transition:enter-start="fade-enter-start"
                          x-transition:enter-end="fade-enter-end">
                         <div class="book-cover-container">
-                            {% if book.olid %}
-                                <img x-show="imageLoaded && !imageError"
-                                     @load="imageLoaded = true"
-                                     @error="imageError = true"
-                                     src="https://covers.openlibrary.org/b/olid/{{ book.olid }}-M.jpg"  <!-- Use medium size instead of large -->
-                                     loading="lazy"  <!-- Add lazy loading -->
-                                     alt="{{ book.title }}"
-                                     class="book-cover">
-                                <!-- Loading placeholder -->
-                                <div x-show="!imageLoaded && !imageError" 
-                                     class="image-placeholder">
-                                    <i class="fas fa-spinner fa-spin"></i>
-                                </div>
-                            {% endif %}
-                            <!-- Fallback image -->
+                            <img x-show="imageLoaded && !imageError"
+                                 @load="imageLoaded = true"
+                                 @error="imageError = true"
+                                 :src="book.volumeInfo.imageLinks?.thumbnail || ''"
+                                 loading="lazy"
+                                 :alt="book.volumeInfo.title"
+                                 class="book-cover">
+                            <div x-show="!imageLoaded && !imageError" 
+                                 class="image-placeholder">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </div>
                             <img x-show="imageError"
                                  src="{% static 'default_book_cover.jpg' %}"
-                                 alt="{{ book.title }}"
+                                 :alt="book.volumeInfo.title"
                                  class="book-cover fallback">
                         </div>
                         <div class="book-info">
-                            <h2 class="book-title">{{ book.title }}</h2>
-                            {% if book.authors %}
-                                <p class="book-author">by {{ book.authors|join:", " }}</p>
-                            {% endif %}
-                            <a href="https://openlibrary.org{{ book.key }}" 
+                            <h2 class="book-title" x-text="book.volumeInfo.title"></h2>
+                            <p class="book-author" x-text="book.volumeInfo.authors ? 'by ' + book.volumeInfo.authors.join(', ') : ''"></p>
+                            <a :href="book.volumeInfo.infoLink" 
                                class="more-info-btn"
                                target="_blank"
                                rel="noopener">
@@ -165,7 +159,7 @@
                             </a>
                         </div>
                     </div>
-                {% endfor %}
+                </template>
             </div>
             <div x-ref="loadingIndicator" class="loading-indicator" x-show="isLoading">
                 <div class="spinner"></div>

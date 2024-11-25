@@ -81,54 +81,78 @@ def main_page(request):
     return render(request, 'main_page.html')
 
 def books(request):
-    query = request.GET.get('query', '')
-    page = request.GET.get('page', 1)
-    limit = 20
+    query = request.GET.get('q', '')
+    page = int(request.GET.get('page', 1))
+    max_results = 20
+    start_index = (page - 1) * max_results
 
     try:
-        if (query):
-            # Search for books with specific fields to reduce payload
-            url = "https://openlibrary.org/search.json"
-            params = {
-                'q': query,
-                'page': page,
-                'limit': limit,
-                'fields': 'key,title,author_name,edition_key,availability'  # Reduced fields
-            }
-            response = requests.get(url, params=params)
-            response.raise_for_status()  # Raise error for bad responses
-            data = response.json()
-            
-            books = [{
-                'title': doc.get('title', 'Unknown Title'),
-                'authors': doc.get('author_name', []),
-                'olid': doc.get('edition_key', [''])[0] if doc.get('edition_key') else '',
-                'key': doc.get('key', '')
-            } for doc in data.get('docs', [])]
-
+        # Base URL for Google Books API
+        base_url = "https://www.googleapis.com/books/v1/volumes"
+        
+        if query:
+            # Search query
+            search_query = query
         else:
-            # Get trending books with specific fields
-            url = 'https://openlibrary.org/trending/now.json'
-            response = requests.get(url)
-            response.raise_for_status()
-            data = response.json()
+            # Default query for trending/popular books
+            search_query = 'subject:fiction'
             
-            books = [{
-                'title': work.get('title', 'Unknown Title'),
-                'authors': [author.get('name', '') for author in work.get('authors', [])],
-                'olid': work.get('availability', {}).get('openlibrary_edition', ''),
-                'key': work.get('key', '')
-            } for work in data.get('works', [])[:limit]]  # Limit results
+        # Parameters for the API request
+        params = {
+            'q': search_query,
+            'startIndex': start_index,
+            'maxResults': max_results,
+            'key': settings.GOOGLE_BOOKS_API_KEY,
+            'orderBy': 'relevance',
+            'printType': 'books',
+            'langRestrict': 'en'
+        }
+
+        response = requests.get(base_url, params=params)
+        response.raise_for_status()
+        data = response.json()
+
+        books = []
+        for item in data.get('items', []):
+            volume_info = item.get('volumeInfo', {})
+            books.append({
+                'id': item.get('id'),
+                'title': volume_info.get('title', 'Unknown Title'),
+                'authors': volume_info.get('authors', []),
+                'description': volume_info.get('description', ''),
+                'thumbnail': volume_info.get('imageLinks', {}).get('thumbnail', ''),
+                'info_link': volume_info.get('infoLink', ''),
+                'published_date': volume_info.get('publishedDate', ''),
+                'categories': volume_info.get('categories', []),
+                'average_rating': volume_info.get('averageRating', 0),
+                'ratings_count': volume_info.get('ratingsCount', 0)
+            })
+
+        total_items = data.get('totalItems', 0)
+        total_pages = (total_items + max_results - 1) // max_results
+
+        context = {
+            'books': books,
+            'query': query,
+            'current_page': page,
+            'total_pages': min(total_pages, 100),  # Google Books API limit
+            'has_next': page * max_results < min(total_items, 2000),  # API limit of 2000 items
+            'has_previous': page > 1
+        }
+
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse(context)
+        return render(request, 'books.html', context)
 
     except requests.RequestException as e:
-        print(f"Error fetching books: {e}")
-        books = []
-
-    return render(request, 'books.html', {
-        'books': books,
-        'query': query,
-        'page': page
-    })
+        error_message = f"Error fetching books: {str(e)}"
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'error': error_message}, status=500)
+        return render(request, 'books.html', {
+            'error': error_message,
+            'books': [],
+            'query': query
+        })
 
 def shows(request):
     query = request.GET.get('query', '')
