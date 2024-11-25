@@ -12,6 +12,9 @@
     --accent-color: rgb(86, 137, 208); /* Ash Gray 2 */
     --primary-gradient: linear-gradient(to right, var(--primary-color), var(--accent-color));
     --bg-dark: var(--background-color);
+    --bg-transparent: rgba(0, 0, 0, 0.8);
+    --accent-alt: rgb(201, 159, 81);
+    --accent-gradient: linear-gradient(to right, var(--accent-color), var(--accent-alt));
 }
 
 body {
@@ -21,8 +24,8 @@ body {
     margin: 0;
     padding: 0;
     min-height: 100vh;
-    background-image: url('{% static "images/background-pattern.svg" %}');
-    background-size: cover;
+    /* Remove or update the background pattern if file doesn't exist */
+    /* background-image: url('../images/background-pattern.svg'); */
 }
 
 input {
@@ -169,6 +172,8 @@ footer {
     padding: 8px 16px;
     border-radius: 20px;
     font-size: 14px;
+    box-shadow: 5px 5px rgba(0, 0, 0, 0.2);
+
 }
 
 .genres {
@@ -183,6 +188,7 @@ footer {
     font-size: 14px;
     display: inline-block;
     margin-bottom: 8px;
+    box-shadow: 4px 4px rgba(0, 0, 0, 0.2);
 }
 
 .credits-section {
@@ -216,6 +222,7 @@ footer {
     border-radius: 10px;
     overflow: hidden;
     transition: transform 0.2s ease;
+    box-shadow: 5px 5px rgba(0, 0, 0, 0.2);
 }
 
 .cast-member:hover {
@@ -270,6 +277,8 @@ footer {
     width: 100%;
     padding: 12px;
     margin-top: 10px;
+    font-family: "Passion One", sans-serif;
+    font-weight: 800;
     background-color: var(--primary-color);
     color: var(--text-color);
     border: none;
@@ -277,6 +286,7 @@ footer {
     cursor: pointer;
     font-size: 16px;
     font-weight: bold;
+    box-shadow: 5px 5px rgba(0, 0, 0, 0.2);
 }
 
 .add-to-watchlist-large:hover {
@@ -307,68 +317,6 @@ footer {
     padding: 40px 20px;
 }
 
-/* Styles for the searchbar */
-.searchbar {
-    text-align: center;
-    margin-bottom: 20px;
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-}
-
-.searchbar form {
-    display: flex;
-    gap: 10px;
-    background-color: var(--card-background-color);
-    padding: 10px;
-    border-radius: 15px;
-    box-shadow: 4px 4px rgba(0, 0, 0, 0.2);
-}
-
-.searchbar input[type="text"] {
-    width: 300px;
-    padding: 12px 20px;
-    font-size: 16px;
-    border: none;
-    border-radius: 10px;
-    font-weight: 600;
-    background-color: var(--card-background-dark-color);
-    color: var(--text-light-color);
-    box-shadow: inset 2px 2px rgba(0, 0, 0, 0.1);
-}
-
-.searchbar input[type="text"]::placeholder {
-    color: var(--text-color);
-    opacity: 0.7;
-}
-
-.searchbar button {
-    padding: 12px 24px;
-    font-size: 16px;
-    font-weight: bold;
-    background-color: var(--accent-color);
-    color: var(--text-color);
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    box-shadow: 2px 2px rgba(0, 0, 0, 0.1);
-    transition: transform 0.1s ease;
-    font-family: "Passion One", sans-serif;
-}
-
-.searchbar button:hover {
-    background-color: var(--button-hover-color);
-    transform: translateY(-1px);
-}
-
-searchbar button:active {
-    transform: translateY(1px);
-}
-
-.searchbar button:hover {
-    background-color: var(--button-hover-color);
-}
-
 /* Styles for the shows container */
 .shows-container h1 {
     text-align: center;
@@ -393,7 +341,7 @@ searchbar button:active {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 20px;
-    padding: 0;
+    padding: 40px 20px;
 }
 .movie-item
 {
@@ -404,6 +352,62 @@ searchbar button:active {
     display: flex;
     flex-direction: column;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 400px; /* Set fixed height for consistency */
+    overflow: hidden;
+}
+
+.movie-image-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.movie-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.movie-item h2 {
+    position: absolute;
+    bottom: 40px; /* Space for the more-info button */
+    left: 0;
+    right: 0;
+    padding: 15px;
+    margin: 0;
+    font-family: "Passion One", sans-serif;
+    background: linear-gradient(to top, var(--bg-transparent), transparent);
+    color: var(--text-color);
+    font-size: 20px;
+    text-align: center;
+    z-index: 2;
+}
+
+.more-info-btn {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 10px;
+    background-color: var(--bg-transparent);
+    color: var(--text-color);
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    text-align: center;
+    text-decoration: none;
+    font-family: "Passion One", sans-serif;
+    z-index: 2;
+    transition: background-color 0.3s ease;
+}
+
+.more-info-btn:hover {
+    background-color: var(--button-hover-color);
+}
+
+.add-to-watchlist {
+    z-index: 3; /* Ensure it's above the gradient overlay */
 }
 
 .movie-item:hover {
@@ -450,25 +454,6 @@ searchbar button:active {
 }
 
 .add-to-watchlist:hover {
-    background-color: var(--button-hover-color);
-}
-
-.more-info-btn {
-    padding: 12px;
-    background-color: var(--primary-color);
-    color: var(--text-color)    ;
-    border: none;
-    border-bottom-left-radius: 10px;
-    border-bottom-right-radius: 10px;
-    cursor: pointer;
-    font-size: 18px;
-    text-align: center;
-    text-decoration: none;
-    margin-top: auto;
-    font-family: "Passion One", sans-serif;
-}
-
-.more-info-btn:hover {
     background-color: var(--button-hover-color);
 }
 
@@ -688,6 +673,7 @@ searchbar button:active {
     font-weight: 800;
     font-family: "Passion One", sans-serif;
     text-shadow: 2px 2px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     transition: all 0.2s ease;
 }
 
@@ -696,6 +682,9 @@ searchbar button:active {
 }
 
 .tab-btn.active {
+    font-family: "Passion One", sans-serif;
+    font-weight: 800;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     background-color: var(--accent-color);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
@@ -1280,6 +1269,8 @@ searchbar button:active {
     font-family: "Passion One", sans-serif;
     font-weight: 800;
     color: var(--text-light-color);
+    font-weight: 800;
+    color: var(--text-light-color);
     text-shadow: 4px 4px rgba(0, 0, 0, 0.2);
     margin: 0px;
 }
@@ -1832,13 +1823,13 @@ searchbar button:active {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    font-family: "League Spartan", sans-serif;
     font-size: 1.5rem;
     font-weight: bold;
     background: var(--primary-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
-
 .logo-icon {
     width: 32px;
     height: 32px;
@@ -1852,16 +1843,16 @@ searchbar button:active {
     padding: 0.75rem 1.5rem;
     border-radius: 0.5rem;
     background: rgba(79, 70, 229, 0.1);
-    color: var(--hover-color);
-    border: 1px solid rgba(129, 140, 248, 0.2);
+    color: var(--accent-color);
+    box-shadow: 5px 5px rgba(0, 0, 0, 0.2);
     cursor: pointer;
     transition: all 0.3s ease;
     text-decoration: none;
 }
 
 .sign-in:hover {
-    background: rgba(79, 70, 229, 0.2);
-    border-color: rgba(129, 140, 248, 0.4);
+    background: rgba(229, 70, 78, 0.5);
+    color: var(--text-color);
 }
 
 .hero {
@@ -1874,21 +1865,25 @@ searchbar button:active {
 
 .hero h1 {
     font-size: 4rem;
+    font-family: "League Spartan", sans-serif;
     font-weight: 800;
     line-height: 1.1;
     margin-bottom: 1.5rem;
     background: var(--primary-gradient);
+    text-shadow: 4px 4px rgba(0, 0, 0, 0.2);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
 .hero p {
     font-size: 1.25rem;
-    color: #94a3b8;
+    font-weight: 600;
+    color: var(--text-color);
     margin-bottom: 3rem;
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
+    text-shadow: 4px 4px rgba(0, 0, 0, 0.2);
 }
 
 .expandable-menu {
@@ -1958,9 +1953,9 @@ searchbar button:active {
     background: rgba(35, 39, 43, 0.7);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
     will-change: transform;
     transform: translateZ(0);
+    box-shadow: 5px 5px rgba(0, 0, 0, 0.2);
 }
 
 .feature-card:hover {
@@ -2373,4 +2368,82 @@ searchbar button:active {
 .features-leave-end {
     opacity: 0;
     transform: translateY(50px);
+}
+
+/* Updated Navbar Search Styles */
+.nav-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.nav-right a
+{
+    padding: 20px;
+    background-color: var(--card-background-color);
+    border-radius: 10px;
+    box-shadow: 5px 5px rgba(0, 0, 0, 0.2);
+    color: var(--text-color);
+    font-weight: 800;
+    text-decoration: none;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+.nav-right a:hover
+{
+    background-color: var(--accent-color);
+    transform: translateY(-3px);
+}
+.nav-right a + a
+{
+    margin-left: 20px;
+}
+.nav-right a:visited
+{
+    color: var(--accent-alt);
+}
+.navbar .searchbar {
+    margin: 0;
+    transition: width 0.3s ease;
+    width: 300px;
+}
+
+.navbar .searchbar.search-open {
+    width: 400px;
+}
+
+.navbar .searchbar form {
+    background: rgba(35, 39, 43, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+}
+
+.navbar .searchbar input[type="text"] {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-size: 1rem;
+    padding: 0.5rem;
+}
+
+.navbar .searchbar button {
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.navbar .searchbar button:hover {
+    color: var(--accent-color);
 }
