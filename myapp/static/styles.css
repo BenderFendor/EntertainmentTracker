@@ -15,6 +15,12 @@
     --bg-transparent: rgba(0, 0, 0, 0.8);
     --accent-alt: rgb(201, 159, 81);
     --accent-gradient: linear-gradient(to right, var(--accent-color), var(--accent-alt));
+    --frost-blur: 20px;
+    --frost-opacity: 0.7;
+    --glow-color: rgba(86, 137, 208, 0.3);
+    --glow-spread: 200px;
+    --glow-intensity: 0.3;
+    --bg-image: url('shows-background.jpg');
 }
 
 body {
@@ -24,8 +30,40 @@ body {
     margin: 0;
     padding: 0;
     min-height: 100vh;
-    /* Remove or update the background pattern if file doesn't exist */
-    /* background-image: url('../images/background-pattern.svg'); */
+    position: relative;
+    overflow-x: hidden;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(35, 39, 43, var(--frost-opacity));
+    backdrop-filter: blur(var(--frost-blur));
+    -webkit-backdrop-filter: blur(var(--frost-blur));
+    z-index: -2;
+    pointer-events: none;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+        circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        var(--glow-color) 0%,
+        transparent 60%
+    );
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
 }
 
 input {
@@ -354,6 +392,10 @@ footer {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     height: 400px; /* Set fixed height for consistency */
     overflow: hidden;
+    background: rgba(35, 39, 43, 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .movie-image-container {
@@ -412,7 +454,9 @@ footer {
 
 .movie-item:hover {
     transform: translateY(-5px) scale(1.02);
-    box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+    box-shadow: 
+        0 0 30px rgba(86, 137, 208, 0.3),
+        0 0 60px rgba(86, 137, 208, 0.2);
 }
 
 .movie-item h2 {
@@ -2446,4 +2490,47 @@ footer {
 
 .navbar .searchbar button:hover {
     color: var(--accent-color);
+}
+
+.glow-active body::after {
+    opacity: 1;
+}
+
+.frost-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(35, 39, 43, 0.85);
+    backdrop-filter: blur(var(--frost-blur));
+    -webkit-backdrop-filter: blur(var(--frost-blur));
+    z-index: -2;
+    pointer-events: none;
+}
+
+.frost-glow {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(
+        circle var(--glow-spread) at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(86, 137, 208, var(--glow-intensity)),
+        transparent 100%
+    );
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.frost-active .frost-glow {
+    opacity: 1;
+}
+
+.bg-container {
+    position: fixed;
+    inset: 0;
+    z-index: -3;
+    background-image: var(--bg-image);
+    background-size: cover;
+    background-position: center;
+    filter: blur(5px);
+    transform: scale(1.1); /* Prevents blur edges showing */
 }

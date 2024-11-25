@@ -13,7 +13,9 @@
     <!-- Single Alpine.js include -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body x-data="showsApp">
+<body x-data="showsApp" 
+      x-bind:class="{ 'frost-active': isAnyItemHovered }"
+      @mousemove="updateMousePosition($event)">
     <header>
         <nav class="navbar" 
              x-transition:enter="navbar-enter" 
@@ -101,9 +103,14 @@
             </div>
         </div>
     </main>
+    <div class="frost-overlay"></div>
+    <div class="frost-glow"></div>
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('showsApp', () => ({
+                isAnyItemHovered: false,
+                mouseX: 0,
+                mouseY: 0,
                 searchQuery: '',
                 isSearchOpen: false,
                 isSearching: false,
@@ -113,19 +120,25 @@
                 currentPage: parseInt('{{ current_page }}'),
                 totalPages: parseInt('{{ total_pages }}'),
 
-                init() {
+                init() { // This function is called when the page is loaded
                     window.addEventListener('scroll', () => this.handleScroll());
+                    
+                    const movieItems = document.querySelectorAll('.movie-item');
+                    movieItems.forEach(item => {
+                        item.addEventListener('mouseenter', () => this.isAnyItemHovered = true);
+                        item.addEventListener('mouseleave', () => this.isAnyItemHovered = false);
+                    });
                 },
 
-                handleScroll() {
-                    if ((window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 100) {
+                handleScroll() { // This function is called when the user scrolls the page
+                    if ((window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 70) { 
                         if (!this.isLoading) {
                             this.loadMore();
                         }
                     }
                 },
 
-                async searchShows() {
+                async searchShows() { // This function is called when the user searches for a show
                     if (this.debounceTimeout) clearTimeout(this.debounceTimeout);
                     
                     this.debounceTimeout = setTimeout(async () => {
@@ -137,7 +150,7 @@
                                     page: this.currentPage
                                 };
                             }
-                            try {
+                            try { // Fetch the search results
                                 const response = await fetch(`?query=${this.searchQuery}`);
                                 const html = await response.text();
                                 const parser = new DOMParser();
@@ -157,7 +170,7 @@
                     }, 300);
                 },
 
-                async loadMore() {
+                async loadMore() { // This function is called when the user scrolls to the bottom of the page
                     if (this.isLoading || this.currentPage >= this.totalPages) return;
                     
                     this.isLoading = true;
@@ -178,9 +191,66 @@
                     } finally {
                         this.isLoading = false;
                     }
+                },
+
+                updateMousePosition(event) { // This function is called when the user moves the mouse its really laggy tho
+                    if (this.isAnyItemHovered) {
+                        this.mouseX = event.clientX;
+                        this.mouseY = event.clientY;
+                        this.updateGlowPosition();
+                    }
+                },
+
+                updateGlowPosition() { // This function updates the position of the glow effect
+                    document.querySelector('.frost-glow').style.setProperty('--mouse-x', `${this.mouseX}px`);
+                    document.querySelector('.frost-glow').style.setProperty('--mouse-y', `${this.mouseY}px`);
                 }
             }));
         });
+
+        function throttle(func, limit) {
+                    let inThrottle;
+                    return function() {
+                        const args = arguments;
+                        const context = this;
+                        if (!inThrottle) {
+                            func.apply(context, args);
+                            inThrottle = true;
+                            setTimeout(() => inThrottle = false, limit);
+                        }
+                    }
+                }
+
+                Alpine.data('glowEffect', () => ({
+                    init() {
+                        this.$watch('$store.mouse', () => {
+                            document.documentElement.style.setProperty('--mouse-x', `${$store.mouse.x}px`);
+                            document.documentElement.style.setProperty('--mouse-y', `${$store.mouse.y}px`);
+                        });
+                    },
+
+                    handleMouseEnter() {
+                        document.body.parentElement.classList.add('glow-active');
+                    },
+
+                    handleMouseLeave() {
+                        document.body.parentElement.classList.remove('glow-active');
+                    }
+                }));
+
+                Alpine.store('mouse', {
+                    x: 0,
+                    y: 0
+                });
+
+                // Throttled mousemove event listener
+                window.addEventListener('mousemove', throttle((e) => {
+                    Alpine.store('mouse', {
+                        x: e.clientX,
+                        y: e.clientY
+                    });
+                }, 50)); // Adjust the limit as needed
+
     </script>
 </body>
 </html>
