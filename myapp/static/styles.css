@@ -2499,7 +2499,7 @@ footer {
 .frost-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(35, 39, 43, 0.85);
+    background: rgba(35, 39, 43, 0.5);
     backdrop-filter: blur(var(--frost-blur));
     -webkit-backdrop-filter: blur(var(--frost-blur));
     z-index: -2;
@@ -2533,4 +2533,44 @@ footer {
     background-position: center;
     filter: blur(5px);
     transform: scale(1.1); /* Prevents blur edges showing */
+}
+/* Media Type Selector Styles */
+.media-type-selector {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    justify-content: center;
+    background-color: var(--card-background-dark-color);
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.media-type-selector button {
+    padding: 8px 16px;
+    background-color: var(--card-background-color);
+    color: var(--text-color);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: "Passion One", sans-serif;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.media-type-selector button.active {
+    background-color: var(--accent-color);
+    transform: translateY(-2px);
+}
+
+.menu-section {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+/* Active menu item styling */
+.menu-item.active {
+    background-color: var(--accent-color);
+    color: var(--text-color);
+    font-weight: bold;
 }

@@ -79,6 +79,7 @@ def shows(request):
     category = request.GET.get('category', 'popular')
     genre = request.GET.get('genre', '')
     page = request.GET.get('page', 1)
+    media_type = request.GET.get('media_type', 'movie')  # Default to 'movie'
 
     api_key = settings.TMDB_API_KEY
     headers = {
@@ -87,34 +88,44 @@ def shows(request):
     }
 
     if query:
-        url = "https://api.themoviedb.org/3/search/movie"
+        url = f"https://api.themoviedb.org/3/search/{media_type}"
         params = {'language': 'en-US', 'query': query, 'page': page}
-        description = f'Results for "{query}"'
+        description = f"Search Results for '{query}'"
     elif genre:
-        genre_id = get_genre_id(genre)  # Ensure this function is defined elsewhere in your code
-        url = "https://api.themoviedb.org/3/discover/movie"
+        genre_id = get_genre_id(genre)
+        url = f"https://api.themoviedb.org/3/discover/{media_type}"
         params = {'language': 'en-US', 'with_genres': genre_id, 'page': page}
-        description = f'Shows in the "{genre.capitalize()}" genre'
+        description = f"{media_type.capitalize()}s in '{genre.capitalize()}'"
     else:
-        if category == 'top_rated':
-            url = "https://api.themoviedb.org/3/movie/top_rated"
-            description = "Top Rated Shows"
-        else:  # Default to 'popular'
-            url = "https://api.themoviedb.org/3/movie/popular"
-            description = "Popular Shows"
+        url = f"https://api.themoviedb.org/3/{media_type}/{category}"
         params = {'language': 'en-US', 'page': page}
+        description = f"{category.replace('_', ' ').title()} {media_type.capitalize()}s"
 
     response = requests.get(url, headers=headers, params=params)
     data = response.json()
-    
+
     total_pages = data.get('total_pages', 1)
     if total_pages > 500:  # TMDB limits to 500 pages
         total_pages = 500
 
+    results = []
+    for item in data.get('results', []):
+        processed_item = {
+            'id': item.get('id'),
+            'title': item.get('title') if media_type == 'movie' else item.get('name'),
+            'release_date': item.get('release_date') if media_type == 'movie' else item.get('first_air_date'),
+            'poster_path': item.get('poster_path'),
+            'overview': item.get('overview'),
+            'media_type': media_type
+        }
+        results.append(processed_item)
+
     context = {
-        'movies': data.get('results', []),
+        'media_items': results,
+        'media_type': media_type,
         'query': query,
         'category': category,
+        'genre': genre,
         'description': description,
         'current_page': int(page),
         'total_pages': total_pages,
@@ -125,45 +136,53 @@ def shows(request):
     }
     return render(request, 'shows.html', context)
 
-def movie_detail(request, movie_id):
+def get_genre_id(genre_name, media_type='movie'):
+    # Updated genre mappings for both movies and TV shows
+    genre_mappings = {
+        'movie': {
+            'action': 28,
+            'comedy': 35,
+            'drama': 18,
+            'fantasy': 14,
+            'horror': 27,
+            'romance': 10749,
+            'sci-fi': 878,
+            'thriller': 53,
+        },
+        'tv': {
+            'action': 10759,  # Action & Adventure
+            'comedy': 35,
+            'drama': 18,
+            'fantasy': 10765,  # Sci-Fi & Fantasy
+            'horror': 9648,    # Mystery
+            'romance': 10749,
+            'sci-fi': 10765,   # Sci-Fi & Fantasy
+            'thriller': 80,    # Crime
+        }
+    }
+    return genre_mappings.get(media_type, {}).get(genre_name.lower(), '')
+
+def movie_detail(request, media_type, show_id):
     api_key = settings.TMDB_API_KEY
     headers = {
         "accept": "application/json",
         "Authorization": f"Bearer {api_key}"
     }
     
-    # Get movie details
-    movie_url = f"https://api.themoviedb.org/3/movie/{movie_id}?language=en-US&append_to_response=credits,videos,similar"
-    response = requests.get(movie_url, headers=headers)
+    # Get show details
+    show_url = f"https://api.themoviedb.org/3/{media_type}/{show_id}?language=en-US&append_to_response=credits,videos,similar"
+    response = requests.get(show_url, headers=headers)
     
     if response.status_code == 200:
-        movie = response.json()
+        show = response.json()
         
         # Process credits data
-        credits = movie.get('credits', {})
+        credits = show.get('credits', {})
         
-        # Get director
-        directors = [crew for crew in credits.get('crew', []) if crew['job'] == 'Director']
-        
-        # Get main cast (limit to top 6)
-        cast = credits.get('cast', [])[:6]
-        
-        # Format genres
-        genres = [genre['name'] for genre in movie.get('genres', [])]
-        
-        context = {
-            'movie': movie,
-            'directors': directors,
-            'cast': cast,
-            'genres': genres,
-            'similar_movies': movie.get('similar', {}).get('results', [])[:4]
-        }
-    else:
-        context = {}
-        messages.error(request, 'Failed to retrieve movie details.')
-    
-    return render(request, 'showsinfo.html', context)
-
+        # Get directors/creators
+        if media_type == 'movie':
+            creators = [crew for crew in credits.get('crew', []) if crew['job'] == 'Director']
+            
 def account(request):
     return render(request, 'account')
 

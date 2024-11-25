@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Popular Shows</title>
+    <title>Popular Movies & Shows</title>
     <link rel="stylesheet" type="text/css" href="{% static 'styles.css' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,9 +13,7 @@
     <!-- Single Alpine.js include -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body x-data="showsApp" 
-      x-bind:class="{ 'frost-active': isAnyItemHovered }"
-      @mousemove="updateMousePosition($event)">
+<body x-data="showsApp()" x-bind:class="{ 'frost-active': isAnyItemHovered }" @mousemove="updateMousePosition($event)">
     <header>
         <nav class="navbar" 
              x-transition:enter="navbar-enter" 
@@ -27,7 +25,7 @@
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
                     </svg>
                 </div>
-                <span>Shows</span>
+                <span>Movies</span>
             </div>
 
             <div class="nav-center">
@@ -39,7 +37,7 @@
                                @input="searchShows"
                                @focus="isSearchOpen = true"
                                @blur="isSearchOpen = false"
-                               placeholder="Search for shows..."
+                               placeholder="Search for movies..."
                                :class="{ 'searching': isSearching }">
                         <button type="submit" 
                                 :disabled="isSearching"
@@ -56,13 +54,28 @@
                     </button>
                     <div class="menu-items-container" x-show="open" @click.away="open = false"
                          x-transition:enter="menu-enter" x-transition:enter-start="menu-enter-start">
-                        <a href="{% url 'shows' %}?category=popular" class="menu-item">Popular</a>
-                        <a href="{% url 'shows' %}?category=top_rated" class="menu-item">Top Rated</a>
+                        <!-- Media Type Switch -->
+                        <div class="menu-section">
+                            <a href="#" @click.prevent="switchMediaType('movie')" 
+                               :class="{ 'active': mediaType === 'movie' }" 
+                               class="menu-item">Movies</a>
+                            <a href="#" @click.prevent="switchMediaType('tv')" 
+                               :class="{ 'active': mediaType === 'tv' }" 
+                               class="menu-item">TV Shows</a>
+                        </div>
                         <div class="menu-divider"></div>
-                        <a href="{% url 'shows' %}?genre=action" class="menu-item">Action</a>
-                        <a href="{% url 'shows' %}?genre=comedy" class="menu-item">Comedy</a>
-                        <a href="{% url 'shows' %}?genre=drama" class="menu-item">Drama</a>
-                        <a href="{% url 'shows' %}?genre=sci-fi" class="menu-item">Sci-Fi</a>
+                        <!-- Categories -->
+                        <div class="menu-section">
+                            <a href="#" @click.prevent="navigateToCategory('popular')" class="menu-item">Popular</a>
+                            <a href="#" @click.prevent="navigateToCategory('top_rated')" class="menu-item">Top Rated</a>
+                        </div>
+                        <div class="menu-divider"></div>
+                        <!-- Genres -->
+                        <div class="menu-section">
+                            <template x-for="genre in genres" :key="genre.id">
+                                <a href="#" @click.prevent="navigateToGenre(genre.name)" class="menu-item" x-text="genre.name"></a>
+                            </template>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -76,23 +89,23 @@
     </header>
     <main>
         <div class="shows-container">
-            <h1 x-text="searchQuery ? `Search Results for '${searchQuery}'` : '{{ description }}'"></h1>
-            <p x-text="searchQuery ? 'Showing results for your search' : 'Discover the latest and most {{ description|lower }} to watch.'"></p>
+            <h1 x-text="description"></h1>
+            <p x-text="subDescription"></p>
             
             <div class="movie-list" x-ref="movieList">
-                {% for movie in movies %}
+                {% for item in media_items %}
                     <div class="movie-item">
                         <div class="movie-image-container">
                             <button class="add-to-watchlist" title="Add to Watchlist">+</button>
                             
-                            {% if movie.poster_path %}
-                                <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" alt="{{ movie.title }} Poster">
+                            {% if item.poster_path %}
+                                <img src="https://image.tmdb.org/t/p/w500{{ item.poster_path }}" alt="{{ item.title }} Poster">
                             {% else %}
                                 <img src="{% static 'noimage.jpg' %}" alt="No Image Available">
                             {% endif %}
                         </div>
-                        <h2>{{ movie.title }} ({{ movie.release_date|slice:":4" }})</h2>
-                        <a href="{% url 'movie_detail' movie.id %}" class="more-info-btn">More info</a>
+                        <h2>{{ item.title }} ({{ item.release_date|slice:":4" }})</h2>
+                        <a href="{% url 'movie_detail' item.media_type item.id %}" class="more-info-btn">More info</a>
                     </div>
                 {% endfor %}
             </div>
@@ -105,152 +118,6 @@
     </main>
     <div class="frost-overlay"></div>
     <div class="frost-glow"></div>
-    <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('showsApp', () => ({
-                isAnyItemHovered: false,
-                mouseX: 0,
-                mouseY: 0,
-                searchQuery: '',
-                isSearchOpen: false,
-                isSearching: false,
-                isLoading: false,
-                debounceTimeout: null,
-                originalContent: null,
-                currentPage: parseInt('{{ current_page }}'),
-                totalPages: parseInt('{{ total_pages }}'),
-
-                init() { // This function is called when the page is loaded
-                    window.addEventListener('scroll', () => this.handleScroll());
-                    
-                    const movieItems = document.querySelectorAll('.movie-item');
-                    movieItems.forEach(item => {
-                        item.addEventListener('mouseenter', () => this.isAnyItemHovered = true);
-                        item.addEventListener('mouseleave', () => this.isAnyItemHovered = false);
-                    });
-                },
-
-                handleScroll() { // This function is called when the user scrolls the page
-                    if ((window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 70) { 
-                        if (!this.isLoading) {
-                            this.loadMore();
-                        }
-                    }
-                },
-
-                async searchShows() { // This function is called when the user searches for a show
-                    if (this.debounceTimeout) clearTimeout(this.debounceTimeout);
-                    
-                    this.debounceTimeout = setTimeout(async () => {
-                        if (this.searchQuery.length > 2) {
-                            this.isSearching = true;
-                            if (!this.originalContent) {
-                                this.originalContent = {
-                                    content: this.$refs.movieList.innerHTML,
-                                    page: this.currentPage
-                                };
-                            }
-                            try { // Fetch the search results
-                                const response = await fetch(`?query=${this.searchQuery}`);
-                                const html = await response.text();
-                                const parser = new DOMParser();
-                                const doc = parser.parseFromString(html, 'text/html');
-                                this.$refs.movieList.innerHTML = doc.querySelector('.movie-list').innerHTML;
-                                this.currentPage = 1;
-                            } catch (error) {
-                                console.error('Search error:', error);
-                            } finally {
-                                this.isSearching = false;
-                            }
-                        } else if (this.searchQuery.length === 0 && this.originalContent) {
-                            this.$refs.movieList.innerHTML = this.originalContent.content;
-                            this.currentPage = this.originalContent.page;
-                            this.originalContent = null;
-                        }
-                    }, 300);
-                },
-
-                async loadMore() { // This function is called when the user scrolls to the bottom of the page
-                    if (this.isLoading || this.currentPage >= this.totalPages) return;
-                    
-                    this.isLoading = true;
-                    try {
-                        const response = await fetch(
-                            `?page=${this.currentPage + 1}&query=${this.searchQuery || ''}&category={{ category }}&genre={{ genre }}`
-                        );
-                        const html = await response.text();
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(html, 'text/html');
-                        const newMovies = doc.querySelector('.movie-list');
-                        if (newMovies) {
-                            this.$refs.movieList.insertAdjacentHTML('beforeend', newMovies.innerHTML);
-                            this.currentPage++;
-                        }
-                    } catch (error) {
-                        console.error('Error loading more movies:', error);
-                    } finally {
-                        this.isLoading = false;
-                    }
-                },
-
-                updateMousePosition(event) { // This function is called when the user moves the mouse its really laggy tho
-                    if (this.isAnyItemHovered) {
-                        this.mouseX = event.clientX;
-                        this.mouseY = event.clientY;
-                        this.updateGlowPosition();
-                    }
-                },
-
-                updateGlowPosition() { // This function updates the position of the glow effect
-                    document.querySelector('.frost-glow').style.setProperty('--mouse-x', `${this.mouseX}px`);
-                    document.querySelector('.frost-glow').style.setProperty('--mouse-y', `${this.mouseY}px`);
-                }
-            }));
-        });
-
-        function throttle(func, limit) {
-                    let inThrottle;
-                    return function() {
-                        const args = arguments;
-                        const context = this;
-                        if (!inThrottle) {
-                            func.apply(context, args);
-                            inThrottle = true;
-                            setTimeout(() => inThrottle = false, limit);
-                        }
-                    }
-                }
-
-                Alpine.data('glowEffect', () => ({
-                    init() {
-                        this.$watch('$store.mouse', () => {
-                            document.documentElement.style.setProperty('--mouse-x', `${$store.mouse.x}px`);
-                            document.documentElement.style.setProperty('--mouse-y', `${$store.mouse.y}px`);
-                        });
-                    },
-
-                    handleMouseEnter() {
-                        document.body.parentElement.classList.add('glow-active');
-                    },
-
-                    handleMouseLeave() {
-                        document.body.parentElement.classList.remove('glow-active');
-                    }
-                }));
-
-                Alpine.store('mouse', {
-                    x: 0,
-                    y: 0
-                });
-
-                // Throttled mousemove event listener
-                window.addEventListener('mousemove', throttle((e) => {
-                    Alpine.store('mouse', {
-                        x: e.clientX,
-                        y: e.clientY
-                    });
-                }, 50)); // Adjust the limit as needed
-
-    </script>
+    <script src="{% static 'shows.js' %}"></script>
 </body>
-</html>
+</html> 
