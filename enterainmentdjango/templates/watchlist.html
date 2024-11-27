@@ -1,0 +1,99 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watchlist</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Caprasimo&family=League+Spartan:wght@100..900&family=Passion+One:wght@400;700;900&family=Ultra&family=Young+Serif&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'watchlist.css' %}">
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    {% csrf_token %}
+</head>
+<body>
+    <div class="container" x-data="watchlistApp()">
+        <header class="header">
+            <h1 class="title">Your Watchlist</h1>
+            <div class="view-controls">
+                <button class="view-button active">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                </button>
+                <button class="view-button">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <div class="controls">
+            <div class="tabs">
+                <button class="tab" @click="currentTab = 'watching'" 
+                        :class="{ active: currentTab === 'watching' }">Currently Watching</button>
+                <button class="tab" @click="currentTab = 'plan_to_watch'"
+                        :class="{ active: currentTab === 'plan_to_watch' }">Plan to Watch</button>
+                <button class="tab" @click="currentTab = 'completed'"
+                        :class="{ active: currentTab === 'completed' }">Completed</button>
+            </div>
+            <select class="sort-control" x-model="sortBy" @change="sortItems()">
+                <option value="title">Sort by Title</option>
+                <option value="rating">Sort by Rating</option>
+                <option value="dateAdded">Sort by Date Added</option>
+            </select>
+        </div>
+
+        <div class="grid">
+            <template x-for="item in filteredItems" :key="item.id">
+                <div class="watchlist-item">
+                    <div class="item-image">
+                        <img :src="item.poster_path" :alt="item.title">
+                        <div class="item-actions">
+                            <button class="action-button" @click="shareItem(item)">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                </svg>
+                            </button>
+                            <a :href="getItemDetailUrl(item)" class="action-button">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </a>
+                            <button class="action-button" @click="deleteItem(item)">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="item-content">
+                        <div class="item-header">
+                            <h3 class="item-title" x-text="item.title"></h3>
+                        </div>
+                        <div class="item-meta" x-text="item.creator + ' • ' + item.year"></div>
+                        <div class="item-meta" x-text="item.genres.join(' | ')"></div>
+                        <div class="rating">
+                            <template x-for="star in 5">
+                                <span class="star" 
+                                   :class="{ active: star <= (item.rating / 2) }"
+                                   @click="updateRating(item, star * 2)">★</span>
+                            </template>
+                            <span x-text="(Math.round(item.rating * 10) / 10).toFixed(1) + '/10'" class="rating-text"></span>
+                        </div>
+                        <div class="progress">
+                            <template x-if="item.type === 'show'">
+                                <div>
+                                    <span x-text="item.progress || 0"></span> / <span x-text="item.total_episodes || '?'"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+    <script src="{% static 'watchlist.js' %}"></script>
+</body>
+</html>

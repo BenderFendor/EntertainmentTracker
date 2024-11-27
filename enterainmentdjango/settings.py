@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+import mimetypes
+mimetypes.add_type("text/javascript", ".js", True)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -42,7 +44,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'myapp',  # Add this line
+    'enterainmentdjango',  # Add this line
+
 ]
 
 MIDDLEWARE = [
@@ -60,7 +63,6 @@ ROOT_URLCONF = 'enterainmentdjango.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'myapp' / 'templates'],  # Add this line
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -124,9 +126,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    BASE_DIR / 'myapp' / 'static',  # Ensure this path is correct
-]
+
+APPEND_SLASH = False  # Only use this if you want to handle URLs without trailing slashes
+
 
 # AWS Cognito Configuration
 AWS_COGNITO_USER_POOL_ID = os.getenv('AWS_COGNITO_USER_POOL_ID')

@@ -1,9 +1,8 @@
 .env
 venv/
 password.txt
-myapp/__pycache__/
-myapp/migrations/
 enterainmentdjango/__pycache__/
+enterainmentdjango/migrations/
 api.json
 db.sqlite3
 *.pyc

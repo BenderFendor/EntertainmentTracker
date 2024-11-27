@@ -67,7 +67,6 @@ function showsApp() {
             document.querySelector('.movie-list').style.transform = 'translate3d(0,0,0)';
             
             // Enable passive event listeners for better scroll performance
-            this.setupEventListeners();
             this.updateDescriptions();
             
             // Initialize lazy loading for images
@@ -89,47 +88,37 @@ function showsApp() {
             }
         },
 
-        /**
-         * Set up optimized event listeners with passive option
-         * Uses requestAnimationFrame for smooth animations
-         */
-        setupEventListeners() {
-            // Optimize scroll performance
-            const throttledScroll = throttle(() => {
-                requestAnimationFrame(() => this.handleScroll());
-            }, 100);
-
-            window.addEventListener('scroll', throttledScroll, { passive: true });
-
-            // Optimize hover effects with hardware acceleration
-            document.querySelectorAll('.movie-item').forEach(item => {
-                item.style.transform = 'translate3d(0,0,0)';
-                item.addEventListener('mouseenter', () => {
-                    requestAnimationFrame(() => {
-                        this.isAnyItemHovered = true;
-                        item.style.transform = 'translate3d(0,0,1px) scale(1.02)';
-                    });
-                });
-                item.addEventListener('mouseleave', () => {
-                    requestAnimationFrame(() => {
-                        this.isAnyItemHovered = false;
-                        item.style.transform = 'translate3d(0,0,0) scale(1)';
-                    });
-                });
-            });
-        },
 
         /**
          * Initialize lazy loading for images
          * Uses IntersectionObserver for better performance
          */
+        // Should include cleanup:
         setupLazyLoading() {
-            document.querySelectorAll('.movie-image-container img').forEach(img => {
-                img.loading = 'lazy';
-                observer.observe(img);
+            this.observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.transform = 'translate3d(0, 0, 0)';
+                        entry.target.style.opacity = '1';
+                    }
+                });
+            }, { threshold: 0.1 });
+            this.observedImages = new WeakSet();
+            
+            document.querySelectorAll('img').forEach(img => {
+                this.observer.observe(img);
+                this.observedImages.add(img);
             });
         },
 
+        cleanup() {
+            if (this.observer) {
+                this.observedImages.forEach(img => {
+                    this.observer.unobserve(img);
+                });
+                this.observer.disconnect();
+            }
+        },
         updateDescriptions() {
             if (this.searchQuery) {
                 this.description = `Search Results for '${this.searchQuery}'`;
@@ -246,41 +235,6 @@ function showsApp() {
                 this.isLoading = false;
             }
         },
-
-        async addToWatchlist(item) {
-            console.log('Starting addToWatchlist:', item);
-            this.isAddingToWatchlist = true;
-
-            try {
-                const response = await fetch('/api/watchlist/add', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
-                    },
-                    body: JSON.stringify(item)
-                });
-
-                console.log('API Response status:', response.status);
-                const responseText = await response.text();
-                console.log('API Response text:', responseText);
-
-                const result = JSON.parse(responseText);
-                console.log('Parsed result:', result);
-
-                if (result.status === 'success') {
-                    console.log('Showing success notification for:', item.title);
-                    this.showNotification(`Added "${item.title}" to watchlist`);
-                    this.watchlistItems.push(item.media_id);
-                }
-            } catch (error) {
-                console.error('Error in addToWatchlist:', error);
-                this.showNotification('Error adding to watchlist', 'error');
-            } finally {
-                this.isAddingToWatchlist = false;
-            }
-        },
-
         showNotification(message, type = 'success') {
             window.dispatchEvent(new CustomEvent('show-notification', {
                 detail: {
@@ -293,7 +247,50 @@ function showsApp() {
 
         isInWatchlist(mediaId) {
             return this.watchlistItems.includes(mediaId);
-        }
+        },
+
+        async addToWatchlist(item) {
+            if (this.isAddingToWatchlist) return;
+            this.isAddingToWatchlist = true;
+        
+            try {
+                const token = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                // Add trailing slash to URL
+                const response = await fetch('/api/watchlist/add/', {  // Changed from /add to /add/
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': token
+                    },
+                    body: JSON.stringify({
+                        media_id: item.media_id,
+                        media_type: item.media_type,
+                        title: item.title,
+                        poster_path: item.poster_path,
+                        genres: item.genres || [],
+                        creator: item.creator || 'Unknown',
+                        year: item.year || '',
+                        total_episodes: item.total_episodes || null,
+                        status: 'plan_to_watch',
+                        rating: 0,
+                        progress: 0
+                    })
+                });
+        
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const result = await response.json();
+        
+                if (result.status === 'success') {
+                    this.watchlistItems.push(item.media_id);
+                    this.showNotification(`Added "${item.title}" to watchlist`);
+                }
+            } catch (error) {
+                console.error('Error adding to watchlist:', error);
+                this.showNotification('Error adding to watchlist', 'error');
+            } finally {
+                this.isAddingToWatchlist = false;
+            }
+        },
     };
 }
 

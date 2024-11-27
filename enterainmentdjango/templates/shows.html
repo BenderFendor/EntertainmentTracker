@@ -4,6 +4,7 @@
 <head>
     <title>Popular Movies & Shows</title>
     <link rel="stylesheet" type="text/css" href="{% static 'styles.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'enterainment.css' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Caprasimo&family=League+Spartan:wght@100..900&family=Passion+One:wght@400;700;900&family=Ultra&family=Young+Serif&display=swap" rel="stylesheet">
@@ -103,7 +104,14 @@
                                         media_id: '{{ item.id }}',
                                         media_type: '{{ item.media_type }}',
                                         title: '{{ item.title }}',
-                                        poster_path: 'https://image.tmdb.org/t/p/w500{{ item.poster_path }}'
+                                        poster_path: 'https://image.tmdb.org/t/p/w500{{ item.poster_path }}',
+                                        genres: {{ item.genres|default:'[]'|safe }},
+                                        creator: '{{ item.director|default:'Unknown' }}',
+                                        year: '{{ item.release_date|slice:':4'|default:'' }}',
+                                        total_episodes: {{ item.episode_count|default:'null' }},
+                                        status: 'plan_to_watch',
+                                        rating: 0,
+                                        progress: 0
                                     })"
                                     :class="{ 'in-watchlist': isInWatchlist({{ item.id }}), 'adding': isAddingToWatchlist }">
                                 <i class="fas fa-plus"></i>

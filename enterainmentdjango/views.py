@@ -16,16 +16,76 @@ logger = logging.getLogger(__name__)
 # TODO: Add proper user authentication system
 # For now, using a dummy user ID for development
 
+def iteminfo(item):
+    if item['media_type'] == 'movie' or item['media_type'] == 'tv':
+        # Get info from TMDB API
+        api_key = settings.TMDB_API_KEY
+        headers = {
+            "accept": "application/json",
+            "Authorization": f"Bearer {api_key}"
+        }
+        url = f"https://api.themoviedb.org/3/{item['media_type']}/{item['media_id']}"
+        try:
+            response = requests.get(url, headers=headers)
+            data = response.json()
+            
+            # For movies, fetch director from crew
+            director = 'Unknown'
+            if item['media_type'] == 'movie':
+                # Get credits
+                credits_url = f"https://api.themoviedb.org/3/movie/{item['media_id']}/credits"
+                credits_response = requests.get(credits_url, headers=headers)
+                credits_data = credits_response.json()
+                # Find director in crew
+                directors = [crew['name'] for crew in credits_data.get('crew', []) if crew['job'] == 'Director']
+                director = directors[0] if directors else 'Unknown'
+            
+            return {
+                'genres': [genre['name'] for genre in data.get('genres', [])],
+                'creator': director if item['media_type'] == 'movie' else data.get('created_by', [{'name': 'Unknown'}])[0]['name'],
+                'year': data.get('release_date', '')[:4] if item['media_type'] == 'movie' else data.get('first_air_date', '')[:4],
+                'rating': data.get('vote_average', 0),
+                'total_episodes': data.get('number_of_episodes') if item['media_type'] == 'tv' else None
+            }
+        except Exception as e:
+            logger.error(f"Error fetching TMDB data: {str(e)}")
+            return {}
+            
+    elif item['media_type'] == 'anime' or item['media_type'] == 'manga':
+        # TODO: Implement Anilist API integration
+        # Use GraphQL query to fetch anime/manga details
+        return {}
+        
+    elif item['media_type'] == 'book':
+        # TODO: Implement Google Books API integration
+        # Use item['media_id'] to fetch book details
+        return {}
+        
+    return {}
+
 def watchlist(request):
     items = WatchlistItem.objects.filter(user='dummy_user')
     return render(request, 'watchlist.html', {'items': items})
 
 @require_http_methods(['GET'])
 def get_watchlist(request):
-    logger.debug('Getting watchlist for dummy user')
-    items = WatchlistItem.objects.filter(user='dummy_user').values()
-    logger.debug('Found %d items in watchlist', len(items))
-    return JsonResponse(list(items), safe=False)
+    try:
+        items = list(WatchlistItem.objects.filter(user='dummy_user').values())
+        # Process each item to include additional info
+        for item in items:
+            if item['media_type'] in ['movie', 'tv']:
+                info = iteminfo(item)
+                item.update({
+                    'genres': info.get('genres', []),
+                    'creator': info.get('creator', 'Unknown'),
+                    'year': info.get('year', ''),
+                    'rating': info.get('rating', 0),
+                    'total_episodes': info.get('total_episodes')
+                })
+        return JsonResponse(items, safe=False)
+    except Exception as e:
+        logger.error(f"Error in get_watchlist: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
 
 @require_http_methods(['POST'])
 def update_watchlist(request):
@@ -39,12 +99,33 @@ def update_watchlist(request):
     except WatchlistItem.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Item not found.'}, status=404)
 
+@require_http_methods(['DELETE'])
+def delete_from_watchlist(request, item_id):
+    logger.debug(f'Attempting to delete item {item_id} from watchlist')
+    try:
+        item = WatchlistItem.objects.get(id=item_id, user='dummy_user')
+        title = item.title
+        item.delete()
+        logger.debug(f'Successfully deleted item {item_id} ({title}) from watchlist')
+        return JsonResponse({'status': 'success', 'message': f'Successfully deleted {title}'})
+    except WatchlistItem.DoesNotExist:
+        logger.error(f'Item {item_id} not found in watchlist')
+        return JsonResponse({'status': 'error', 'message': 'Item not found'}, status=404)
+    except Exception as e:
+        logger.error(f'Error deleting item {item_id}: {str(e)}', exc_info=True)
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
 @require_http_methods(['POST'])
 def add_to_watchlist(request):
     logger.debug('Adding to watchlist for dummy user')
     try:
         data = json.loads(request.body)
         logger.debug('Received data: %s', data)
+        
+        # Extract genres from the incoming data or fetch from API
+        genres = data.get('genres', [])
+        creator = data.get('creator', 'Unknown')
+        year = data.get('year', '')
         
         item, created = WatchlistItem.objects.get_or_create(
             user='dummy_user',
@@ -55,7 +136,11 @@ def add_to_watchlist(request):
                 'poster_path': data['poster_path'],
                 'status': 'plan_to_watch',
                 'progress': 0,
-                'total_episodes': data.get('total_episodes')
+                'total_episodes': data.get('total_episodes'),
+                'genres': genres,  # Store genres if your model supports it
+                'creator': creator,
+                'year': year,
+                'rating': 0
             }
         )
         logger.debug('Item %s: %s', 'created' if created else 'updated', item.id)
@@ -90,7 +175,7 @@ def books(request):
         # Base URL for Google Books API
         base_url = "https://www.googleapis.com/books/v1/volumes"
         
-        if query:
+        if (query):
             # Search query
             search_query = query
         else:
@@ -190,13 +275,14 @@ def shows(request):
 
     results = []
     for item in data.get('results', []):
+        # Get additional details for each item
         processed_item = {
             'id': item.get('id'),
             'title': item.get('title') if media_type == 'movie' else item.get('name'),
             'release_date': item.get('release_date') if media_type == 'movie' else item.get('first_air_date'),
             'poster_path': item.get('poster_path'),
             'overview': item.get('overview'),
-            'media_type': media_type
+            'media_type': media_type,
         }
         results.append(processed_item)
 

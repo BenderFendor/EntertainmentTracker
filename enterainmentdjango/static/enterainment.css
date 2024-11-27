@@ -1,0 +1,46 @@
+.notification-container {
+    position: fixed;
+    top: 130px;
+    right: 20px;
+    z-index: 1239999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.notification {
+    background: var(--accent-color);
+    color: var(--text-color);
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    font-family: "League Spartan", sans-serif;
+    font-weight: bold;
+    font-size: 16px;
+    min-width: 300px;
+    max-width: 400px;
+    pointer-events: all;
+    cursor: pointer;
+    transform: translateZ(0);
+    will-change: transform, opacity;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.notification.error {
+    background: rgb(220, 38, 38);
+}
+
+.notification.success {
+    background: rgb(34, 197, 94);
+}
+
+.notification.warning {
+    background: rgb(234, 179, 8);
+}
+/* Hide this only show when testing */
+.notification .test-notification { 
+    display: none;
+}

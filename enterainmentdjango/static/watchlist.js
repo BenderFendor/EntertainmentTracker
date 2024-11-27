@@ -9,25 +9,47 @@ function watchlistApp() {
         },
         
         get filteredItems() {
-            return this.items.filter(item => item.status === this.currentTab);
+            // Add default values and handle undefined properties
+            return this.items
+                .filter(item => item.status === this.currentTab)
+                .map(item => ({
+                    ...item,
+                    genres: item.genres || [],
+                    rating: item.rating || 0,
+                    progress: item.progress || 0,
+                    creator: item.creator || 'Unknown',
+                    year: item.year || '',
+                    total_episodes: item.total_episodes || '?'
+                }));
         },
         
         async loadWatchlist() {
             console.log('Loading watchlist...');
             try {
-                const response = await fetch('/api/watchlist');
+                const response = await fetch('/api/watchlist/');  // Add trailing slash
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                this.items = await response.json();
+                const data = await response.json();
+                // Ensure each item has required properties
+                this.items = data.map(item => ({
+                    ...item,
+                    genres: item.genres || [],
+                    rating: item.rating || 0,
+                    progress: item.progress || 0,
+                    creator: item.creator || 'Unknown',
+                    year: item.year || '',
+                    total_episodes: item.total_episodes || '?'
+                }));
                 console.log('Watchlist loaded:', this.items);
             } catch (error) {
                 console.error('Error loading watchlist:', error);
+                this.items = [];
             }
         },
         
         async updateStatus(item) {
             console.log('Updating status:', item);
             try {
-                const response = await fetch('/api/watchlist/update', {
+                const response = await fetch('/api/watchlist/update/', {  // Add trailing slash
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -49,7 +71,7 @@ function watchlistApp() {
                 const token = document.querySelector('[name=csrfmiddlewaretoken]').value;
                 console.log('CSRF Token:', token);
                 
-                const response = await fetch('/api/watchlist/add', {
+                const response = await fetch('/api/watchlist/add/', {  // Add trailing slash
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -75,6 +97,7 @@ function watchlistApp() {
         },
 
         async updateRating(item, rating) {
+            if (!item) return;
             item.rating = rating;
             await this.updateItem(item);
         },
@@ -84,22 +107,43 @@ function watchlistApp() {
         },
 
         async deleteItem(item) {
+            if (!item?.id) {
+                this.showNotification('Invalid item to delete', 'error');
+                return;
+            }
+        
             if (!confirm('Are you sure you want to delete this item?')) return;
             
             try {
-                const response = await fetch(`/api/watchlist/delete/${item.id}`, {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+                if (!csrfToken) {
+                    throw new Error('CSRF token not found');
+                }
+        
+                const response = await fetch(`/api/watchlist/delete/${item.id}/`, {  // Ensure trailing slash
                     method: 'DELETE',
                     headers: {
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                    }
+                        'X-CSRFToken': csrfToken,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin'
                 });
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.message || `Server error: ${response.status}`);
+                }
+                
+                // Remove item from local state only after successful deletion
                 this.items = this.items.filter(i => i.id !== item.id);
-                this.showNotification(`Removed "${item.title}" from watchlist`);
+                this.showNotification(data.message || 'Item successfully deleted');
+                
             } catch (error) {
                 console.error('Error deleting item:', error);
-                this.showNotification('Error deleting item', 'error');
+                this.showNotification(`Error deleting item: ${error.message}`, 'error');
+                throw error;
             }
         },
 
@@ -133,6 +177,51 @@ function watchlistApp() {
                         return 0;
                 }
             });
+        },
+
+        shareItem(item) {
+            if (!item) return;
+            // Implement share functionality
+            console.log('Sharing item:', item);
+        },
+
+        showInfo(item) {
+            if (!item) return;
+            
+            switch (item.media_type) {
+                case 'movie':
+                case 'tv':
+                    window.location.href = `/media/${item.media_type}/${item.media_id}`;
+                    break;
+                case 'anime':
+                case 'manga':
+                    // TODO: Implement anime/manga detail view
+                    console.log('Anime/Manga detail view not yet implemented');
+                    break;
+                case 'book':
+                    // TODO: Implement book detail view
+                    console.log('Book detail view not yet implemented');
+                    break;
+                default:
+                    console.warn('Unknown media type:', item.media_type);
+            }
+        },
+
+        getItemDetailUrl(item) {
+            if (!item) return '#';
+            
+            switch (item.media_type) {
+                case 'movie':
+                case 'tv':
+                    return `/media/${item.media_type}/${item.media_id}`;
+                case 'anime':
+                case 'manga':
+                    return `/animanga/${item.media_id}`;
+                case 'book':
+                    return `/books/${item.media_id}`;
+                default:
+                    return '#';
+            }
         },
 
         showNotification(message, type = 'success') {
