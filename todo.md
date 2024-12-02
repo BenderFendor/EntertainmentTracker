@@ -46,3 +46,5 @@ Use WeakMap/WeakSet for DOM references
 
 
 - Fix watchlist to be not as slow maybe with data streaming so like the poster and name first then having a loading bar or stream for information that takes a second and having a loading for the loading watchlist and not having it just be blank
+
+- Add way to view the most highest rated anime movies or movies by a director or actor
