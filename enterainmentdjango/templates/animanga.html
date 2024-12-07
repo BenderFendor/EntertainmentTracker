@@ -4,193 +4,194 @@
 <head>
     <title>Anime & Manga</title>
     <link rel="stylesheet" type="text/css" href="{% static 'styles.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'enterainment.css' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Caprasimo&family=League+Spartan:wght@100..900&family=Passion+One:wght@400;700;900&family=Ultra&family=Young+Serif&display=swap" rel="stylesheet">
-    <!-- Add Font Awesome CDN -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Caprasimo&family=League+Spartan:wght@100..900&family=Passion+One:wght@400;700;900&family=Ultra&family=Young+Serif&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Add Alpine.js -->
-    <script src="//unpkg.com/alpinejs" defer></script>
-    <script src="//unpkg.com/intersection-observer" defer></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    {% csrf_token %}
 </head>
-<body>
+<body x-data="animeApp()">
     <header>
-        <div class="header-content" x-data="{ isMenuOpen: false }">
-            <div class="title-menu-container">
-                <!-- Combined Title and Hamburger Menu -->
-                <div class="title-hamburger" @mouseleave="isMenuOpen = false">
-                    <h1>Anime & Manga</h1>
-                    <div class="hamburger-menu">
-                        <input type="checkbox" id="menu-toggle" x-model="isMenuOpen">
-                        <!-- Use Font Awesome Icon -->
-                        <label for="menu-toggle" class="menu-icon" @click="isMenuOpen = !isMenuOpen">
-                            <i class="fas" :class="isMenuOpen ? 'fa-times' : 'fa-bars'"
-                               x-transition:enter="menu-enter"
-                               x-transition:enter-start="menu-enter-start"
-                               x-transition:enter-end="menu-enter-end"></i>
-                        </label>
-                        <div class="dropdown-menu" 
-                             x-show="isMenuOpen"
-                             x-transition:enter="menu-enter"
-                             x-transition:enter-start="menu-enter-start"
-                             x-transition:enter-end="menu-enter-end"
-                             x-transition:leave="menu-leave"
-                             x-transition:leave-start="menu-leave-start"
-                             x-transition:leave-end="menu-leave-end">
-                            <ul>
-                                <li><a href="{% url 'animanga' %}?category=popular">Popular Anime</a></li>
-                                <li><a href="{% url 'animanga' %}?category=top_rated">Top Rated</a></li>
-                                <li class="divider"></li>
-                                <li>Genres</li>
-                                <li><a href="{% url 'animanga' %}?genre=action">Action</a></li>
-                                <li><a href="{% url 'animanga' %}?genre=comedy">Comedy</a></li>
-                                <li><a href="{% url 'animanga' %}?genre=drama">Drama</a></li>
-                                <li><a href="{% url 'animanga' %}?genre=sci-fi">Sci-Fi</a></li>
-                                <!-- Add more genres as needed -->
-                            </ul>
+        <nav class="navbar" 
+             x-transition:enter="navbar-enter" 
+             x-transition:enter-start="navbar-enter-start" 
+             x-transition:enter-end="navbar-enter-end">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg width="20" height="20" fill="white" viewBox="0 0 24 24">
+                        <path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14zM8 15c0-1.66 1.34-3 3-3 .35 0 .69.07 1 .18V6h5v2h-3v7.03c-.02 1.64-1.35 2.97-3 2.97-1.66 0-3-1.34-3-3z"/>
+                    </svg>
+                </div>
+                <span>Anime & Manga</span>
+            </div>
+
+            <div class="nav-center">
+                <div class="searchbar" :class="{ 'search-open': isSearchOpen }">
+                    <form @submit.prevent="searchAnime">
+                        <input type="text" 
+                               x-model="searchQuery" 
+                               @input="searchAnime"
+                               @focus="isSearchOpen = true"
+                               @blur="isSearchOpen = false"
+                               placeholder="Search for anime..."
+                               :class="{ 'searching': isSearching }">
+                        <button type="submit" 
+                                :disabled="isSearching"
+                                :class="{ 'searching': isSearching }">
+                            <i class="fas" :class="isSearching ? 'fa-spinner fa-spin' : 'fa-search'"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="expandable-menu" x-data="{ open: false }">
+                    <button @click="open = !open" class="expand-button">
+                        Browse <i class="fas" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                    </button>
+                    <div class="menu-items-container" x-show="open" @click.away="open = false"
+                         x-transition:enter="menu-enter" x-transition:enter-start="menu-enter-start">
+                        <div class="menu-section">
+                            <a href="#" @click.prevent="switchMediaType('ANIME')" 
+                               :class="{ 'active': mediaType === 'ANIME' }" 
+                               class="menu-item">Anime</a>
+                            <a href="#" @click.prevent="switchMediaType('MANGA')" 
+                               :class="{ 'active': mediaType === 'MANGA' }" 
+                               class="menu-item">Manga</a>
+                        </div>
+                        <div class="menu-divider"></div>
+                        <div class="menu-section">
+                            <a href="#" @click.prevent="navigateToCategory('TRENDING')" class="menu-item">Trending</a>
+                            <a href="#" @click.prevent="navigateToCategory('POPULAR')" class="menu-item">Popular</a>
+                            <a href="#" @click.prevent="navigateToCategory('TOP_RATED')" class="menu-item">Top Rated</a>
+                        </div>
+                        <div class="menu-divider"></div>
+                        <div class="menu-section">
+                            <template x-for="genre in genres" :key="genre">
+                                <a href="#" @click.prevent="navigateToGenre(genre)" class="menu-item" x-text="genre"></a>
+                            </template>
                         </div>
                     </div>
                 </div>
             </div>
-            <nav>
-                <ul>
-                    <li><a href="{% url 'account' %}">Create Account / Login</a></li>
-                    <li><a href="{% url 'books' %}">Books</a></li>
-                    <li><a href="{% url 'shows' %}">Shows</a></li>
-                    <li><a href="{% url 'animanga' %}">Anime & Manga</a></li>
-                </ul>
-            </nav>
-        </div>
+
+            <div class="nav-right">
+                <a href="{% url 'account' %}">Create Account / Login</a>
+                <a href="{% url 'books' %}">Books</a>
+                <a href="{% url 'shows' %}">Shows</a>
+                <a href="{% url 'watchlist' %}">Watchlist</a>
+            </div>
+        </nav>
     </header>
 
-    <main x-data="{ 
-        searchQuery: '{{ query|default:"" }}',
-        isLoading: false,
-        currentPage: {{ current_page|default:1 }},
-        hasNextPage: {{ has_next|yesno:'true,false' }},
-
-        async handleSearch() {
-            if (this.debounceTimeout) clearTimeout(this.debounceTimeout);
-            
-            this.debounceTimeout = setTimeout(() => {
-                this.applyFilters();
-            }, 300);
-        },
-
-        async applyFilters() {
-            const params = new URLSearchParams();
-            if (this.searchQuery) params.set('query', this.searchQuery);
-            window.location.search = params.toString();
-        },
-
-        handleScroll() {
-            if ((window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 100) {
-                if (!this.isLoading && this.hasNextPage) {
-                    this.loadMore();
-                }
-            }
-        },
-
-        async loadMore() {
-            if (this.isLoading) return;
-            const nextPage = this.currentPage + 1;
-            this.isLoading = true;
-            
-            try {
-                const response = await fetch(
-                    `?page=${nextPage}&query=${this.searchQuery}`
-                );
-                const html = await response.text();
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const newAnime = doc.querySelector('.anime-list').innerHTML;
-                this.$refs.animeList.insertAdjacentHTML('beforeend', newAnime);
-                this.currentPage = nextPage;
-                this.hasNextPage = doc.querySelector('main').__x.$data.hasNextPage;
-            } catch (error) {
-                console.error('Error loading more anime:', error);
-            } finally {
-                this.isLoading = false;
-            }
-        }
-    }" @scroll.window="handleScroll">
-        <div class="searchbar">
-            <form @submit.prevent="handleSearch()">
-                <input type="text" 
-                       x-model="searchQuery" 
-                       @input="handleSearch()"
-                       placeholder="Search for anime..."
-                       :class="{ 'searching': isLoading }">
-            </form>
-        </div>
-        
+    <main>
         <div class="anime-container">
-            <template x-if="searchQuery">
-                <h1>Search Results for "<span x-text="searchQuery"></span>"</h1>
-            </template>
-            <template x-if="!searchQuery">
-                <h1>Trending Anime</h1>
-            </template>
-
-            {% if error %}
-                <div class="error-message">{{ error }}</div>
-            {% else %}
-                <div class="anime-list" x-ref="animeList">
-                    {% for anime in animanga_list %}
-                        <div class="anime-item">
-                            <div class="anime-cover-container">
-                                {% if anime.status and anime.format != "MOVIE" %}
-                                    <p class="anime-status">{{ anime.status }}</p>
-                                {% endif %}
-                                <img src="{{ anime.coverImage.large }}"
-                                     alt="{{ anime.title.english|default:anime.title.romaji }}"
-                                     class="anime-cover">
-                            </div>
-                            <div class="anime-info">
-                                <h2 class="anime-title">{{ anime.title.english|default:anime.title.romaji }}</h2>
-                                {% if anime.averageScore %}
-                                    <p class="anime-score">Score: {{ anime.averageScore }}%</p>
-                                {% endif %}
-                                
-                                <!-- Updated episode display -->
-                                <p class="anime-episodes">
-                                    {% if anime.format == "MOVIE" %}
-                                    {% else %}
-                                        Episode: 
-                                        {% if anime.status == "RELEASING" and anime.nextAiringEpisode %}
-                                            {{ anime.nextAiringEpisode.episode|add:"-1" }}
-                                            {% if anime.episodes %}
-                                                /{{ anime.episodes }}
-                                            {% endif %}
-                                        {% else %}
-                                            {{ anime.episodes|default:"?" }}
+            <h1 x-text="description"></h1>
+            <p x-text="subDescription"></p>
+            
+            <div class="anime-list" x-ref="animeList">
+                {% for anime in animanga_list %}
+                    <div class="anime-item">
+                        <div class="anime-cover-container">
+                            <button class="add-to-watchlist-animanga" 
+                                    @click="addToWatchlist({
+                                        media_id: '{{ anime.id }}',
+                                        media_type: '{{ anime.format }}',
+                                        title: '{{ anime.title.english|default:anime.title.romaji }}',
+                                        poster_path: '{{ anime.coverImage.large }}',
+                                        genres: {{ anime.genres|safe }},
+                                        status: 'plan_to_watch',
+                                        rating: 0,
+                                        progress: 0,
+                                        total_episodes: {{ anime.episodes|default:'null' }}
+                                    })"
+                                    :class="{ 'in-watchlist': isInWatchlist({{ anime.id }}), 'adding': isAddingToWatchlist }">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            
+                            {% if anime.status and anime.format != "MOVIE" %}
+                                <p class="anime-status">{{ anime.status }}</p>
+                            {% endif %}
+                            <img src="{{ anime.coverImage.large }}"
+                                 alt="{{ anime.title.english|default:anime.title.romaji }}"
+                                 class="anime-cover">
+                        </div>
+                        <div class="anime-info">
+                            <h2>{{ anime.title.english|default:anime.title.romaji }}</h2>
+                            {% if anime.averageScore %}
+                                <div class="score">
+                                    <i class="fas fa-star"></i>
+                                    <span>{{ anime.averageScore }}%</span>
+                                </div>
+                            {% endif %}
+                            
+                            {% if anime.format != "MOVIE" %}
+                                <p class="episodes">
+                                    Episodes: 
+                                    {% if anime.status == "RELEASING" and anime.nextAiringEpisode %}
+                                        {{ anime.nextAiringEpisode.episode|add:"-1" }}
+                                        {% if anime.episodes %}
+                                            /{{ anime.episodes }}
                                         {% endif %}
+                                    {% else %}
+                                        {{ anime.episodes|default:"?" }}
                                     {% endif %}
                                 </p>
-                                                            
-      
-                                
-                                <!-- Genre display -->
-                                <div class="anime-genres">
-                                    {% for genre in anime.genres|slice:":3" %}
-                                        <span class="genre-tag">{{ genre }}</span>
-                                    {% endfor %}
-                                </div>
-
-                                <!-- More Info button -->
-                                <a href="{% url 'anime_detail' anime.id %}" class="more-info-btn">More Info</a>
+                            {% endif %}
+                            
+                            <div class="genres">
+                                {% for genre in anime.genres|slice:":3" %}
+                                    <span class="genre-tag">{{ genre }}</span>
+                                {% endfor %}
                             </div>
+
+                            <a href="{% url 'anime_detail' anime.id %}" class="more-info-btn">More info</a>
                         </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        </div>
-        <div x-show="isLoading" class="loading-indicator">
-            <div class="spinner"></div>
-            Loading more anime...
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div x-show="isLoading" class="loading-indicator">
+                <div class="spinner"></div>
+                Loading more anime...
+            </div>
         </div>
     </main>
+
+    <div class="bg-container"></div>
+    <div class="frost-overlay"></div>
+    <div class="frost-blur"></div>
+    
+    <div class="notification-container" 
+         x-data="{ notifications: [] }" 
+         x-init="
+         window.addEventListener('show-notification', (event) => {
+             notifications.push({
+                 id: Date.now(),
+                 message: event.detail.message,
+                 type: event.detail.type || 'success'
+             });
+             setTimeout(() => {
+                 notifications = notifications.filter(n => n.id !== event.detail.id);
+             }, 3000);
+         })">
+        <template x-for="notification in notifications" :key="notification.id">
+            <div class="notification" 
+                 :class="notification.type"
+                 x-show="true"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 transform translate-y-2"
+                 x-transition:enter-end="opacity-100 transform translate-y-0"
+                 x-transition:leave="transition ease-in duration-300"
+                 x-transition:leave-start="opacity-100 transform translate-y-0"
+                 x-transition:leave-end="opacity-0 transform translate-y-2">
+                <span x-text="notification.message"></span>
+            </div>
+        </template>
+    </div>
+    
+    <script src="{% static 'anime.js' %}"></script>
+    <script src="{% static 'watchlist.js' %}"></script>
 </body>
 </html>

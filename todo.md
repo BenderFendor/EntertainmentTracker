@@ -1,50 +1,93 @@
-- Make account page
-- Add login for users
-- Make it so that the watchlist items have the genre and the ratings. I would do this by getting the more detailed information in each watchlist and just when adding to a watchlist give the id. That way the make shows.html doesn't have to look up a lot of information and slow the page down.
-- Update book page to work
-- Add Watchlist to account page
-- Add progress tracking functionality to watchlist items
-- Implement sorting and filtering in watchlist view
-- Add notification system for watchlist actions
-- Implement share functionality for watchlist items
-- Add review/notes system for watchlist items
-- Create mobile-responsive layouts for all pages
-- Implement search functionality in watchlist
-- Add batch actions for watchlist items
-- Create user settings page
-- Fix speed and loading with shows.html
-- Have a more uniform styling
-- Split up the style.css into more page specific .CSS files
-- For everything but the main loading page use CSS for animation instead of java script to speed up website.
--Standardize component structure
+# Entertainment Tracker Project TODO
 
-State Management:
-Create a centralized state management system instead of scattered state across components
-Move watchlist logic from multiple files into a single service
-Implement proper error boundaries and loading states
+## Authentication & User Management (Priority)
+- Implement AWS Cognito Integration:
+  - Set up AWS Cognito User Pool and configure settings
+  - Install required dependencies (boto3, aws-amplify-sdk)
+  - Create basic authentication flows (signup, login, password reset)
+  - Implement token management and session handling
+  - Add social login options
+  - Create middleware for Cognito token validation
+- Develop Account Page Features:
+  - User profile information display
+  - Account settings management
+  - Password change functionality
+  - Email preferences
+  - Connected social accounts management
 
-API Optimization:
-Batch API requests where possible
-Implement proper caching for API responses
-Add rate limiting and request throttling consistently
-Database Optimization:
+## Watchlist Enhancement
+### Core Functionality
+- Add detailed information to watchlist items:
+  - Include genre and ratings
+  - Store only IDs during initial add
+  - Implement lazy loading for detailed information
+- Implement progress tracking for watchlist items
+- Add review and notes system
+- Create batch actions functionality
+- Implement share functionality
 
-Database Optimization:
-Add proper indexing to WatchlistItem model
-Implement database caching
-Optimize database queries to reduce N+1 problems
+### UI/UX Improvements
+- Implement sorting and filtering
+- Add search functionality
+- Create notification system for watchlist actions
+- Optimize watchlist loading:
+  - Implement data streaming approach
+  - Show posters and names first
+  - Add loading indicators
+  - Stream additional information progressively
+- Add watchlist display to account page
 
-Code Organization:
-Move duplicate code into shared utilities
-Create reusable components for common UI elements
-Standardize error handling and notifications
+## Performance Optimization
+### Frontend
+- Fix speed issues in shows.html:
+  - Implement lazy loading
+  - Use virtual scrolling for long lists
+  - Optimize image loading
+  - Fix Loading For Pagination RN doesn't work.
+- Replace JavaScript animations with CSS animations
+- Implement proper loading states
+- Add error boundaries | What does that even mean?
 
-Memory Management:
-Fix memory leaks from event listeners not being cleaned up
-Implement proper garbage collection for removed elements
-Use WeakMap/WeakSet for DOM references
+### Backend
+- Database Optimization:
+  - Add proper indexing to WatchlistItem model
+  - Implement database caching
+  - Optimize queries to reduce N+1 problems
+- API Optimization:
+  - Implement request batching
+  - Add response caching
+  - Implement rate limiting
+  - Add request throttling
 
+## Code Structure & Organization
+### State Management
+- Create centralized state management system
+- Consolidate watchlist logic into single service
+- Implement proper error handling
 
-- Fix watchlist to be not as slow maybe with data streaming so like the poster and name first then having a loading bar or stream for information that takes a second and having a loading for the loading watchlist and not having it just be blank
+### Code Quality
+- Move duplicate code into shared utilities
+- Create reusable components
+- Standardize error handling and notifications
+- Fix memory leaks:
+  - Clean up event listeners
+  - Implement proper garbage collection
+  - Use WeakMap/WeakSet for DOM references
 
-- Add way to view the most highest rated anime movies or movies by a director or actor
+### Styling
+- Create uniform styling across pages
+- Split style.css into page-specific files
+- Standardize component structure
+- Ensure mobile-responsive layouts
+
+## Feature Additions
+- Update book page functionality
+- Add filtering for highest-rated anime/movies
+- Add director/actor-based filtering
+- Implement advanced search features
+
+## Testing & Documentation
+- Add unit tests for core functionality
+- Create integration tests for API endpoints
+- Document AWS Cognito integration
+- Create user documentation for new features
