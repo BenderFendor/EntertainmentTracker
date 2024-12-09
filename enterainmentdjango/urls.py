@@ -13,12 +13,12 @@ urlpatterns = [
     path('movie/<int:movie_id>/', views.movie_detail, name='movie_detail'),
     path('animanga/', views.animanga, name='animanga'),  # Keep only the main animanga route
     path('animanga/<int:anime_id>/', views.animanga_detail, name='anime_detail'),
+    path('<str:media_type>/<int:show_id>/', views.movie_detail, name='movie_detail'),
     path('api/trending-posters', views.get_trending_posters, name='trending-posters'),
     path('api/trending-anime', views.get_trending_anime, name='trending-anime'),
     path('api/watchlist/', views.get_watchlist, name='get_watchlist'),
     path('api/watchlist/add/', views.add_to_watchlist, name='add_to_watchlist'),
     path('api/watchlist/update/', views.update_watchlist, name='update_watchlist'),
     path('api/watchlist/delete/<int:item_id>/', views.delete_from_watchlist, name='delete_from_watchlist'),
-    path('<str:media_type>/<int:show_id>/', views.movie_detail, name='movie_detail'),
     path('watchlist/', views.watchlist, name='watchlist'),
 ]

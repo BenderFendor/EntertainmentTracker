@@ -431,7 +431,7 @@ footer {
     left: 0;
     right: 0;
     padding: 10px;
-    background-color: var (--bg-transparent);
+    background-color: var(--bg-transparent);
     color: var(--text-color);
     border: none;
     cursor: pointer;
@@ -533,6 +533,11 @@ footer {
 
 .add-to-watchlist:hover {
     background-color: var(--button-hover-color);
+}
+
+.add-to-watchlist:hover::before {
+    opacity: 1;
+    visibility: visible;
 }
 
 /* Styles for the buttons */
@@ -2662,4 +2667,66 @@ footer {
 
 .opacity-100 {
     opacity: 1;
+}
+
+/* Standardize Info Card Layouts */
+.info-card {
+    background: var(--card-background-color);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 30px;
+    margin: 20px 0;
+}
+
+/* Tooltip styling */
+/* ...existing code... */
+
+.watchlist-filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.watchlist-filters select,
+.watchlist-filters input {
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.watchlist-btn .tooltip {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: 100%; /* Position above the button */
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 8px;
+    padding: 6px 8px;
+    background-color: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-size: 12px;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.watchlist-btn:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Ensure mobile compatibility */
+@media (hover: none) {
+    .watchlist-btn .tooltip {
+        display: none;
+    }
 }

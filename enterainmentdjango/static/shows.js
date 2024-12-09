@@ -63,6 +63,7 @@ function showsApp() {
          * Sets up performance optimizations and initial state
          */
         init() {
+            this.setupInfiniteScroll();
             // Force GPU acceleration for animations
             document.querySelector('.movie-list').style.transform = 'translate3d(0,0,0)';
             
@@ -71,6 +72,31 @@ function showsApp() {
             
             // Initialize lazy loading for images
             this.setupLazyLoading();
+        },
+
+        setupInfiniteScroll() {
+            let scrollTimeout;
+            const scrollHandler = () => {
+                if (scrollTimeout) {
+                    clearTimeout(scrollTimeout);
+                }
+
+                scrollTimeout = setTimeout(() => {
+                    const bottomOffset = 100;
+                    if ((window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - bottomOffset) {
+                        if (!this.isLoading && this.hasNextPage) {
+                            this.loadMore();
+                        }
+                    }
+                }, 100);
+            };
+
+            window.addEventListener('scroll', scrollHandler);
+
+            // Cleanup handler on page change/unmount
+            this.$cleanup = () => {
+                window.removeEventListener('scroll', scrollHandler);
+            };
         },
 
         /**

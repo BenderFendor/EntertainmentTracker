@@ -6,7 +6,7 @@ from django.shortcuts import render, redirect
 import boto3
 from django.core.paginator import Paginator
 import os
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest, HttpResponseServerError
 from django.views.decorators.http import require_http_methods
 from .models import WatchlistItem
 import logging
@@ -328,27 +328,43 @@ def get_genre_id(genre_name, media_type='movie'):
     }
     return genre_mappings.get(media_type, {}).get(genre_name.lower(), '')
 
-def movie_detail(request, media_type, show_id):
+def movie_detail(request, movie_id):
+    # Validate 'id' parameter
+    try:
+        movie_id
+    except (ValueError, TypeError):
+        return HttpResponseBadRequest("Invalid movie ID.")
+
     api_key = settings.TMDB_API_KEY
     headers = {
         "accept": "application/json",
         "Authorization": f"Bearer {api_key}"
     }
     
-    # Get show details
-    show_url = f"https://api.themoviedb.org/3/{media_type}/{show_id}?language=en-US&append_to_response=credits,videos,similar"
-    response = requests.get(show_url, headers=headers)
-    
-    if response.status_code == 200:
+    try:
+        # Get movie details
+        show_url = f"https://api.themoviedb.org/3/movie/{movie_id}?language=en-US&append_to_response=credits,videos,similar"
+        response = requests.get(show_url, headers=headers)
+        response.raise_for_status()
+        
         show = response.json()
-        
-        # Process credits data
         credits = show.get('credits', {})
+        creators = [crew for crew in credits.get('crew', []) if crew['job'] == 'Director']
         
-        # Get directors/creators
-        if media_type == 'movie':
-            creators = [crew for crew in credits.get('crew', []) if crew['job'] == 'Director']
-            
+        context = {
+            'movie': show,
+            'directors': creators,
+            'cast': credits.get('cast', [])[:10],
+            'similar_movies': show.get('similar', {}).get('results', [])[:6],
+            'genres': [genre['name'] for genre in show.get('genres', [])]
+        }
+        
+        return render(request, 'showsinfo.html', context)
+        
+    except requests.RequestException as e:
+        logger.error(f"Error fetching movie details: {str(e)}")
+        return render(request, 'showsinfo.html', {'error': 'Failed to load movie details'})
+
 def account(request):
     return render(request, 'account')
 
@@ -755,9 +771,35 @@ def get_trending_posters(request):
     data = response.json()
     
     posters = [
+
         {"image_url": f"https://image.tmdb.org/t/p/w500{movie['poster_path']}"} 
         for movie in data.get("results", [])[:10] 
         if movie.get("poster_path")
     ]
     
     return JsonResponse(posters, safe=False)
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+def update_watchlist_progress(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            item_id = data.get('item_id')
+            progress = data.get('progress')
+
+            # Validate data
+            if not item_id or progress is None:
+                return JsonResponse({'success': False, 'error': 'Invalid data.'})
+
+            # Update the watchlist item
+            item = WatchlistItem.objects.get(id=item_id, user=request.user)
+            item.progress = progress
+            item.save()
+
+            return JsonResponse({'success': True})
+        except Exception as e:
+            logger.error(f"Error updating watchlist progress: {e}")
+            return JsonResponse({'success': False, 'error': 'An error occurred.'})
+    else:
+        return JsonResponse({'success': False, 'error': 'Invalid request method.'})

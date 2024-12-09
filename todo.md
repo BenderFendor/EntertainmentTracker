@@ -1,11 +1,43 @@
 # Entertainment Tracker Project TODO
 
 ## Currently Fixing
-- Fix the anime info to look like the movie info
-- Fix the shows pagination scrolling
-- Fix the more info button for the shows as well
-- Remove the test notifcation on the shows page
-- Fix this TypeError: movie_detail() got an unexpected keyword argument 'movie_id'
+
+- Fix watchlist to work with anime ratings and have the anime creater as will where the director would be.
+- Add a way to move your watchlist to completed or currenlty watching
+- Add a to submit that change with like a button
+- The watchlist needs to move to the other section using javascript and have the button for update status to be under the plan to watch
+
+### Display Standardization
+- Standardize anime info display:
+  - Match movie info card layout and styling
+  - Implement consistent grid system
+  - Use shared component templates
+
+### Pagination Issues
+- Fix shows pagination scrolling:
+  - Implement proper scroll event debouncing
+  - Add loading states during data fetch
+  - Clear event listeners on component unmount
+- Fix animanga.html pagination:
+  - Add scroll position tracking
+  - Implement proper scroll event persistence
+  - Add loading indicator during fetch
+
+### UI/UX Fixes
+- Fix shows "More Info" button:
+  - Standardize route parameter naming
+  - Update event handlers
+  - Implement proper error handling
+- Add tooltip to watchlist button:
+  - Implement hover tooltip component
+  - Add "Add to Watchlist" text
+  - Ensure mobile compatibility
+
+### Backend Fixes
+- Resolve TypeError in movie_detail:
+  - Update route parameter from 'movie_id' to 'id'
+  - Add parameter validation
+  - Implement proper error handling
 
 ## Authentication & User Management
 - Implement AWS Cognito Integration:

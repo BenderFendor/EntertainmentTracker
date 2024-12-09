@@ -30,6 +30,7 @@ function animeApp() {
             'Thriller'
         ],
         watchlist: [],
+        isLoadingMore: false,
 
         init() {
             this.loadWatchlist();
@@ -54,13 +55,50 @@ function animeApp() {
         },
 
         setupInfiniteScroll() {
-            window.addEventListener('scroll', () => {
-                if ((window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 100) {
-                    if (!this.isLoading && this.hasNextPage) {
-                        this.loadMore();
-                    }
+            let lastScrollPosition = 0;
+            let scrollTimeout;
+
+            const scrollHandler = () => {
+                if (scrollTimeout) {
+                    clearTimeout(scrollTimeout);
                 }
-            });
+                scrollTimeout = setTimeout(() => {
+                    const currentScroll = window.scrollY;
+                    const windowHeight = window.innerHeight;
+                    const documentHeight = document.documentElement.scrollHeight;
+                    const scrolledToBottom = (windowHeight + currentScroll) >= (documentHeight - 100);
+
+                    if (scrolledToBottom && !this.isLoadingMore && this.hasNextPage) {
+                        this.isLoadingMore = true;
+                        this.showLoadingIndicator(); // Show loading state
+                        this.loadMore().finally(() => {
+                            this.isLoadingMore = false;
+                            this.hideLoadingIndicator(); // Hide loading state
+                        });
+                    }
+                    lastScrollPosition = currentScroll;
+                }, 200); // Debounce time
+            };
+
+            window.addEventListener('scroll', scrollHandler, { passive: true });
+
+            // Cleanup event listener on component unmount
+            this.$cleanup = () => {
+                if (scrollTimeout) {
+                    clearTimeout(scrollTimeout);
+                }
+                window.removeEventListener('scroll', scrollHandler);
+            };
+        },
+
+        showLoadingIndicator() {
+            // Implement loading indicator logic
+            this.isLoading = true;
+        },
+
+        hideLoadingIndicator() {
+            // Implement loading indicator logic
+            this.isLoading = false;
         },
 
         updateDescriptionFromUrl() {
@@ -129,24 +167,31 @@ function animeApp() {
             
             this.isLoading = true;
             const nextPage = this.currentPage + 1;
-            const params = new URLSearchParams(window.location.search);
-            params.set('page', nextPage);
-
+            
             try {
+                const params = new URLSearchParams(window.location.search);
+                params.set('page', nextPage);
                 const response = await fetch(`?${params}`);
-                if (response.ok) {
-                    const html = await response.text();
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    const newContent = doc.querySelector('.anime-list').innerHTML;
-                    
+                
+                if (!response.ok) throw new Error('Failed to fetch more items');
+                
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newContent = doc.querySelector('.anime-list').innerHTML;
+                
+                // Only update if we got new content
+                if (newContent.trim()) {
                     this.$refs.animeList.insertAdjacentHTML('beforeend', newContent);
                     this.currentPage = nextPage;
                     this.hasNextPage = doc.querySelector('[data-has-next]')?.dataset.hasNext === 'true';
+                } else {
+                    this.hasNextPage = false;
                 }
             } catch (error) {
                 console.error('Error loading more anime:', error);
                 this.showNotification('Error loading more content', 'error');
+                this.hasNextPage = false;
             } finally {
                 this.isLoading = false;
             }
@@ -225,8 +270,24 @@ function animeApp() {
                     type,
                     id
                 }
+            const tooltip = event.target.querySelector('.tooltip');
             }));
             return id;
+        }
+    };
+}
+            if (tooltip) {
+                tooltip.style.visibility = 'visible';
+                tooltip.style.opacity = '1';
+            }
+        },
+
+        hideTooltip(event) {
+            const tooltip = event.target.querySelector('.tooltip');
+            if (tooltip) {
+                tooltip.style.visibility = 'hidden';
+                tooltip.style.opacity = '0';
+            }
         }
     };
 }

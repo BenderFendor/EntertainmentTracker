@@ -124,7 +124,8 @@
                             {% endif %}
                         </div>
                         <h2>{{ item.title }} ({{ item.release_date|slice:":4" }})</h2>
-                        <a href="{% url 'movie_detail' item.media_type item.id %}" class="more-info-btn">More info</a>
+                        <a href="{% url 'movie_detail' media_type=item.media_type show_id=item.id %}" class="more-info-btn">More info</a>
+
                     </div>
                 {% endfor %}
             </div>
@@ -141,9 +142,9 @@
     
     <!-- Notification Container -->
     <div class="notification-container">
-        <div class="notification test-notification">
+        <!-- <div class="notification test-notification">
             <p>This is a test notification.</p>
-        </div>
+        </div> -->
     </div>
     
     <!-- Notification Container -->

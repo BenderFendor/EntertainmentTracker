@@ -19,9 +19,8 @@
     --glow-spread: 200px;
     --glow-intensity: 0.3;
     --bg-image: url('shows-background.jpg');
-    --button-shadow: 4px 4px 0 rgba(0, 0, 0, 0.2);
-    --text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
 }
+
 
 * {
     margin: 0;
@@ -149,6 +148,8 @@ body {
 }
 
 .rating-container {
+    display: flex;
+    align-items: center;
     margin: 1rem 0;
 }
 
@@ -392,6 +393,10 @@ body {
 .controls {
     margin-bottom: 2rem;
     animation: fadeIn 0.6s ease-out 0.2s both;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
 }
 
 .tabs {
@@ -621,15 +626,134 @@ body {
     background-color: var(--card-background-dark-color);
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .grid {
-        grid-template-columns: 1fr;
-    }
+/* Add new styles for search and filter */
+input[type="text"],
+select {
+    background-color: var(--card-background-color);
+    color: var(--text-color);
+    font-family: 'Inter', sans-serif;
+    border: none;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 4px 4px rgba(0, 0, 0, 0.2);
+    min-width: 200px;
+}
 
-    .header {
-        flex-direction: column;
-        gap: 1rem;
-        text-align: center;
-    }
+input[type="text"]::placeholder {
+    color: rgba(251, 245, 235, 0.5);
+}
+
+input[type="text"]:focus,
+select:focus {
+    outline: none;
+    background-color: var(--card-background-dark-color);
+    box-shadow: 6px 6px rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px);
+}
+
+select:hover {
+    background-color: var(--card-background-dark-color);
+    cursor: pointer;
+}
+
+/* Add styles for the new status dropdown */
+.status-dropdown {
+    background-color: var(--card-background-color);
+    color: var(--text-color);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    margin-top: 1rem;
+    font-family: 'Inter', sans-serif;
+}
+
+.frost-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(35, 39, 43, 0.5);
+    backdrop-filter: blur(var(--frost-blur));
+    -webkit-backdrop-filter: blur(var(--frost-blur));
+    z-index: -2;
+    pointer-events: none;
+}
+.frost-blur {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(
+        circle at center,
+        rgba(86, 137, 208, 0.15),
+        transparent 70%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.bg-container {
+    position: fixed;
+    inset: 0;
+    z-index: -3;
+    background-image: var(--bg-image);
+    background-size: cover;
+    background-position: center;
+    transform: scale(1.1); /* Prevents blur edges showing */
+}
+
+
+.status-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+.status-submit-btn {
+    background: var(--accent-color);
+    color: var(--text-color);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+}
+
+.status-submit-btn:hover {
+    background: var(--button-hover-color);
+    transform: translateY(-2px);
+}
+
+.rating-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.stars {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.star {
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--card-background-dark-color);
+}
+
+.star.active {
+    color: var(--accent-color);
+}
+
+.rating-value {
+    font-size: 0.875rem;
+    opacity: 0.8;
+}
+
+.status-controls.has-changes {
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    margin-top: 1rem;
 }

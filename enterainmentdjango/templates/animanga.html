@@ -88,7 +88,7 @@
     <main>
         <div class="anime-container">
             <h1 x-text="description"></h1>
-            <p x-text="subDescription"></p>
+            <p x-text="subDescription" class="titlesubtext"></p>
             
             <div class="anime-list" x-ref="animeList">
                 {% for anime in animanga_list %}
@@ -96,10 +96,10 @@
                         <div class="anime-cover-container">
                             <button class="add-to-watchlist-animanga" 
                                     @click="addToWatchlist({
-                                        media_id: '{{ anime.id }}',
-                                        media_type: '{{ anime.format }}',
-                                        title: '{{ anime.title.english|default:anime.title.romaji }}',
-                                        poster_path: '{{ anime.coverImage.large }}',
+                                        media_id: {{ anime.id }},
+                                        media_type: '{{ anime.format|escapejs }}',
+                                        title: '{{ anime.title.english|default:anime.title.romaji|escapejs }}',
+                                        poster_path: '{{ anime.coverImage.large|escapejs }}',
                                         genres: {{ anime.genres|safe }},
                                         status: 'plan_to_watch',
                                         rating: 0,
@@ -129,14 +129,13 @@
                             {% if anime.format != "MOVIE" %}
                                 <p class="episodes">
                                     Episodes: 
-                                    {% if anime.status == "RELEASING" and anime.nextAiringEpisode %}
-                                        {{ anime.nextAiringEpisode.episode|add:"-1" }}
-                                        {% if anime.episodes %}
-                                            /{{ anime.episodes }}
+                                    <span class="episode-count">
+                                        {% if anime.status == "RELEASING" and anime.nextAiringEpisode %}
+                                            {{ anime.nextAiringEpisode.episode|add:"-1" }}{% if anime.episodes %}/{{ anime.episodes }}{% endif %}
+                                        {% else %}
+                                            {{ anime.episodes|default:"?" }}
                                         {% endif %}
-                                    {% else %}
-                                        {{ anime.episodes|default:"?" }}
-                                    {% endif %}
+                                    </span>
                                 </p>
                             {% endif %}
                             

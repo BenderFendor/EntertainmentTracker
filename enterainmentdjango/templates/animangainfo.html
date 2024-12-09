@@ -4,47 +4,61 @@
 <head>
     <title>{{ title }}</title>
     <link rel="stylesheet" type="text/css" href="{% static 'styles.css' %}">
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="//unpkg.com/alpinejs" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body>
     <header>
-        <div class="header-content">
-            <h1>
-                {% if movie %}
-                    {{ movie.title }} ({{ movie.release_date|slice:":4" }})
-                {% else %}
-                    {{ Media.title.english }} ({{ Media.startDate.year }})
-                {% endif %}
-            </h1>
-            <nav>
-                <ul>
-                    <li><a href="{% url 'main_page' %}">Home</a></li>
-                    {% if movie %}
-                        <li><a href="{% url 'shows' %}">Back to Shows</a></li>
-                    {% else %}
-                        <li><a href="{% url 'animanga' %}">Back to Anime</a></li>
-                    {% endif %}
-                </ul>
-            </nav>
-        </div>
+        <nav class="navbar" 
+             x-data="{ 
+                isSearchOpen: false,
+                isSearching: false,
+                searchQuery: '',
+                mediaType: 'anime'
+             }"
+             x-transition:enter="navbar-enter" 
+             x-transition:enter-start="navbar-enter-start" 
+             x-transition:enter-end="navbar-enter-end">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg width="20" height="20" fill="white" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+                    </svg>
+                </div>
+                <span>{{ Media.title.english }} ({{ Media.startDate.year }})</span>
+            </div>
+            <div class="nav-right">
+                <a href="{% url 'main_page' %}">Home</a>
+                <a href="{% url 'animanga' %}">Back to Anime</a>
+            </div>
+        </nav>
     </header>
 
     <main>
         <div class="info-page-container">
+            <!-- Overview Section -->
             <div class="info-grid">
                 <div class="info-card poster-card">
-                    {% if movie %}
-                        <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" alt="{{ movie.title }} Poster" class="movie-poster">
-                    {% else %}
-                        <img src="{{ Media.coverImage.extraLarge }}" alt="{{ Media.title.english }} Cover" class="movie-poster">
-                    {% endif %}
-                    <button 
-                        class="add-to-watchlist-large" 
-                        x-data="{ status: false }" 
-                        @click="status = !status" 
-                        :class="{ 'active': status }"
-                    ></button>
-                    <h3>Description</h3>
+                    <img src="{{ Media.coverImage.extraLarge }}" alt="{{ Media.title.english }} Cover" class="movie-poster">
+                    <button class="add-to-watchlist-large" x-data="{ status: false }" @click="status = !status" :class="{ 'active': status }">
+                        Add to Watchlist
+                    </button>
+                </div>
+
+                <div class="info-card details-card">
+                    <div class="movie-metadata">
+                        <span class="rating">⭐ {{ Media.averageScore }}/100</span>
+                        <span class="episodes">📺 {{ Media.episodes }} episodes</span>
+                        <span class="year">📅 {{ Media.startDate.year }}</span>
+                    </div>
+                    
+                    <div class="genres">
+                        {% for genre in Media.genres %}
+                            <span class="genre-tag">{{ genre }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <h3>Overview</h3>
                     <p>{{ Media.description|safe }}</p>
                 </div>
             </div>
@@ -348,6 +362,20 @@
                 </div>
             </div>
         </div>
+        <div class="bg-container"></div>
+        <div class="frost-overlay"></div>
+        <div class="frost-blur"></div>  
     </main>
+
+    <!-- Fix the tags section by converting Python False to JavaScript false -->
+    <script>
+        const fixedTags = JSON.parse('{{ Media.tags|escapejs }}').map(tag => ({
+                ...tag,
+                isGeneralSpoiler: tag.isGeneralSpoiler === 'False' ? false : tag.isGeneralSpoiler,
+                isMediaSpoiler: tag.isMediaSpoiler === 'False' ? false : tag.isMediaSpoiler,
+                isAdult: tag.isAdult === 'False' ? false : tag.isAdult
+            }));
+        window.animeTags = fixedTags;
+    </script>
 </body>
 </html>

@@ -63,6 +63,28 @@
     color: var(--text-light-color);
 }
 
+/* Add these new tooltip styles */
+.add-to-watchlist-animanga::after {
+    content: "Add to Watchlist";
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: var(--text-light-color);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.add-to-watchlist-animanga:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
 
 /* Anime-specific Styles */
 .anime-container {
@@ -125,11 +147,18 @@
 }
 
 .anime-info h2 {
-    font-size: 25px;
+    font-size: 20px;
     color: var(--text-color);
     font-weight: bold;
     margin-bottom: 8px;
     font-family: "League Spartan", sans-serif;
+}
+
+.anime-info p {
+    font-size: 16px;
+    color: var(--text-light-color);
+    font-weight: 500;
+    margin-bottom: 8px;
 }
 
 .anime-title {
@@ -151,6 +180,17 @@
     display: flex;
     flex-wrap: wrap;
     gap: 5px;
+}
+
+.anime-container .titlesubtext {
+    font-size: 24px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    text-shadow: 2px 2px rgba(0, 0, 0, 0.2);
+    color: var(--text-light-color);
+    margin-bottom: 8px;
+    text-align: center;
+
 }
 
 /* Updated anime-specific styles */
@@ -185,4 +225,19 @@
     font-family: "Passion One", sans-serif;
     z-index: 2;
     box-shadow: 2px 2px rgba(0, 0, 0, 0.1);
+}
+
+.episodes {
+    padding: 10px;
+    font-size: 14px;
+    color: var(--text-light-color);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.episode-count {
+    display: inline-block;
+    white-space: nowrap;
 }

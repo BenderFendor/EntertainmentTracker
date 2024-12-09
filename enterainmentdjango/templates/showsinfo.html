@@ -4,18 +4,47 @@
 <head>
     <title>{{ movie.title }}</title>
     <link rel="stylesheet" type="text/css" href="{% static 'styles.css' %}">
+    <script src="//unpkg.com/alpinejs" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body>
     <header>
-        <div class="header-content">
-            <h1>{{ movie.title }} ({{ movie.release_date|slice:":4" }})</h1>
-            <nav>
-                <ul>
-                    <li><a href="{% url 'main_page' %}">Home</a></li>
-                    <li><a href="{% url 'shows' %}">Back to Shows</a></li>
-                </ul>
-            </nav>
-        </div>
+        <nav class="navbar" 
+             x-data="{ 
+                isSearchOpen: false,
+                isSearching: false,
+                searchQuery: '',
+                mediaType: 'movie',
+                genres: [],
+                searchShows() {
+                    // Implement search functionality
+                },
+                switchMediaType(type) {
+                    this.mediaType = type;
+                },
+                navigateToCategory(category) {
+                    // Implement category navigation
+                },
+                navigateToGenre(genre) {
+                    // Implement genre navigation
+                }
+             }"
+             x-transition:enter="navbar-enter" 
+             x-transition:enter-start="navbar-enter-start" 
+             x-transition:enter-end="navbar-enter-end">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg width="20" height="20" fill="white" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+                    </svg>
+                </div>
+                <span>{{ movie.title }} ({{ movie.release_date|slice:":4" }})</span>
+            </div>
+            <div class="nav-right">
+                <a href="{% url 'main_page' %}">Home</a>
+                <a href="{% url 'shows' %}">Back to Shows</a>
+            </div>
+        </nav>
     </header>
     <main>
         <div class="info-page-container">
@@ -130,6 +159,9 @@
                 </div>
             </div>
         </div>
+        <div class="bg-container"></div>
+        <div class="frost-overlay"></div>
+        <div class="frost-blur"></div>    
     </main>
     <script>
         document.querySelectorAll('.tab-btn').forEach(button => {
