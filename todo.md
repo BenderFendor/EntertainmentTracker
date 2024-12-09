@@ -1,6 +1,13 @@
 # Entertainment Tracker Project TODO
 
-## Authentication & User Management (Priority)
+## Currently Fixing
+- Fix the anime info to look like the movie info
+- Fix the shows pagination scrolling
+- Fix the more info button for the shows as well
+- Remove the test notifcation on the shows page
+- Fix this TypeError: movie_detail() got an unexpected keyword argument 'movie_id'
+
+## Authentication & User Management
 - Implement AWS Cognito Integration:
   - Set up AWS Cognito User Pool and configure settings
   - Install required dependencies (boto3, aws-amplify-sdk)
