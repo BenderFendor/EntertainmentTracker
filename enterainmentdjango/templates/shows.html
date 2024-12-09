@@ -15,7 +15,9 @@
     <meta name="csrf-token" content="{{ csrf_token }}">
     {% csrf_token %}
 </head>
-<body x-data="showsApp()">
+<body x-data="showsApp()" 
+      data-total-pages="{{ total_pages }}" 
+      data-current-page="{{ current_page }}">
     <header>
         <nav class="navbar" 
              x-transition:enter="navbar-enter" 
@@ -103,10 +105,10 @@
                                     @click="addToWatchlist({
                                         media_id: '{{ item.id }}',
                                         media_type: '{{ item.media_type }}',
-                                        title: '{{ item.title }}',
+                                        title: '{{ item.title|escapejs }}',
                                         poster_path: 'https://image.tmdb.org/t/p/w500{{ item.poster_path }}',
                                         genres: {{ item.genres|default:'[]'|safe }},
-                                        creator: '{{ item.director|default:'Unknown' }}',
+                                        creator: '{{ item.director|default:'Unknown'|escapejs }}',
                                         year: '{{ item.release_date|slice:':4'|default:'' }}',
                                         total_episodes: {{ item.episode_count|default:'null' }},
                                         status: 'plan_to_watch',

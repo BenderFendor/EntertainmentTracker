@@ -63,6 +63,26 @@ function showsApp() {
          * Sets up performance optimizations and initial state
          */
         init() {
+            // Get initial values from data attributes and URL params
+            const body = document.body;
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            this.totalPages = parseInt(body.dataset.totalPages) || 1;
+            this.page = parseInt(body.dataset.currentPage) || 1;
+            this.mediaType = urlParams.get('media_type') || 'movie';
+            this.category = urlParams.get('category') || 'popular';
+            this.genre = urlParams.get('genre') || '';
+            this.searchQuery = urlParams.get('query') || '';
+            
+            console.log('Initial state:', {
+                totalPages: this.totalPages,
+                currentPage: this.page,
+                mediaType: this.mediaType,
+                category: this.category,
+                genre: this.genre,
+                searchQuery: this.searchQuery
+            });
+
             this.setupInfiniteScroll();
             // Force GPU acceleration for animations
             document.querySelector('.movie-list').style.transform = 'translate3d(0,0,0)';
@@ -74,29 +94,51 @@ function showsApp() {
             this.setupLazyLoading();
         },
 
+        /**
+         * Sets up infinite scroll with enhanced debugging
+         */
         setupInfiniteScroll() {
-            let scrollTimeout;
-            const scrollHandler = () => {
-                if (scrollTimeout) {
-                    clearTimeout(scrollTimeout);
-                }
+            // Add initial debug log
+            console.log('🔄 Infinite scroll initialized with:', {
+                initialPage: this.page,
+                totalPages: this.totalPages
+            });
+            
+            const handleScroll = throttle(() => {
+                // Get scroll position values
+                const scrollPosition = window.innerHeight + window.pageYOffset;
+                const bottomThreshold = document.documentElement.scrollHeight - 100;
+                
+                // Debug every scroll event
+                console.log('📜 Scroll detected:', {
+                    scrollPosition,
+                    bottomThreshold,
+                    reachedBottom: scrollPosition >= bottomThreshold,
+                    currentPage: this.page,
+                    isLoading: this.isLoading
+                });
 
-                scrollTimeout = setTimeout(() => {
-                    const bottomOffset = 100;
-                    if ((window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - bottomOffset) {
-                        if (!this.isLoading && this.hasNextPage) {
-                            this.loadMore();
-                        }
+                if (scrollPosition >= bottomThreshold) {
+                    console.log('⚡ Bottom threshold reached!');
+                    if (!this.isLoading && this.page < this.totalPages) {
+                        console.log('🔄 Triggering loadMore()');
+                        this.loadMore();
+                    } else {
+                        console.log('⏸️ Load skipped:', {
+                            isLoading: this.isLoading,
+                            currentPage: this.page,
+                            totalPages: this.totalPages
+                        });
                     }
-                }, 100);
-            };
+                }
+            }, 150); // Reduced throttle time for better responsiveness
 
-            window.addEventListener('scroll', scrollHandler);
+            // Add scroll listener with passive option for better performance
+            window.addEventListener('scroll', handleScroll, { passive: true });
+            console.log('🎯 Scroll listener attached');
 
-            // Cleanup handler on page change/unmount
-            this.$cleanup = () => {
-                window.removeEventListener('scroll', scrollHandler);
-            };
+            // Store the handler for cleanup
+            this._scrollHandler = handleScroll;
         },
 
         /**
@@ -113,7 +155,6 @@ function showsApp() {
                 }
             }
         },
-
 
         /**
          * Initialize lazy loading for images
@@ -189,7 +230,7 @@ function showsApp() {
             if (this.genre) params.append('genre', this.genre);
             if (this.category) params.append('category', this.category);
 
-            window.location.href = `/shows?${params.toString()}`;
+            window.location.href = `/shows/?${params.toString()}`;
         },
 
         /**
@@ -206,7 +247,7 @@ function showsApp() {
                     
                     try {
                         const response = await fetch(
-                            `/shows?query=${encodeURIComponent(this.searchQuery)}`,
+                            `/shows/?query=${encodeURIComponent(this.searchQuery)}`,
                             { signal: controller.signal }
                         );
                         const html = await response.text();
@@ -230,37 +271,68 @@ function showsApp() {
             }, 300);
         },
 
+        /**
+         * Enhanced loadMore with detailed logging
+         */
         async loadMore() {
-            if (this.isLoading || this.page >= this.totalPages) return;
-            
+            const loadStartTime = performance.now();
+            console.log('📥 loadMore started:', {
+                currentPage: this.page,
+                totalPages: this.totalPages,
+                isLoading: this.isLoading,
+                mediaType: this.mediaType,
+                category: this.category
+            });
+
+            if (this.isLoading || this.page >= this.totalPages) {
+                console.log('🚫 loadMore cancelled - already loading or at end');
+                return;
+            }
+
             this.isLoading = true;
+            
             try {
                 const nextPage = this.page + 1;
                 const params = new URLSearchParams({
                     page: nextPage.toString(),
-                    query: this.searchQuery || '',
-                    category: this.category || '',
-                    genre: this.genre || ''
+                    media_type: this.mediaType,
+                    category: this.category
                 });
+
+                if (this.searchQuery) params.append('query', this.searchQuery);
+                if (this.genre) params.append('genre', this.genre);
+
+                const url = `/shows/?${params.toString()}`; // Added leading slash
+                console.log('🌐 Fetching:', url);
                 
-                const response = await fetch(`/shows?${params.toString()}`);
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
                 const html = await response.text();
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
                 const newMovies = doc.querySelector('.movie-list');
                 const movieList = this.$refs.movieList;
-                
+
                 if (newMovies && movieList) {
+                    const newItemCount = newMovies.children.length;
+                    console.log(`➕ Adding ${newItemCount} new items to the list`);
+                    
                     movieList.insertAdjacentHTML('beforeend', newMovies.innerHTML);
                     this.page = nextPage;
                     this.setupLazyLoading();
+                    
+                    const loadTime = (performance.now() - loadStartTime).toFixed(2);
+                    console.log(`✨ Page ${nextPage} loaded in ${loadTime}ms`);
                 }
             } catch (error) {
-                console.error('Error loading more movies:', error);
+                console.error('❌ Error in loadMore:', error);
+                this.showNotification('Failed to load more content', 'error');
             } finally {
                 this.isLoading = false;
             }
         },
+
         showNotification(message, type = 'success') {
             window.dispatchEvent(new CustomEvent('show-notification', {
                 detail: {

@@ -254,17 +254,28 @@ def shows(request):
 
     if query:
         url = f"https://api.themoviedb.org/3/search/{media_type}"
-        params = {'language': 'en-US', 'query': query, 'page': page}
-        description = f"Search Results for '{query}'"
+        params = {
+            'language': 'en-US', 
+            'query': query, 
+            'page': page,
+            'include_adult': 'false'  # Add adult content filter
+        }
     elif genre:
         genre_id = get_genre_id(genre)
         url = f"https://api.themoviedb.org/3/discover/{media_type}"
-        params = {'language': 'en-US', 'with_genres': genre_id, 'page': page}
-        description = f"{media_type.capitalize()}s in '{genre.capitalize()}'"
+        params = {
+            'language': 'en-US', 
+            'with_genres': genre_id, 
+            'page': page,
+            'include_adult': 'false'  # Add adult content filter
+        }
     else:
         url = f"https://api.themoviedb.org/3/{media_type}/{category}"
-        params = {'language': 'en-US', 'page': page}
-        description = f"{category.replace('_', ' ').title()} {media_type.capitalize()}s"
+        params = {
+            'language': 'en-US', 
+            'page': page,
+            'include_adult': 'false'  # Add adult content filter
+        }
 
     response = requests.get(url, headers=headers, params=params)
     data = response.json()
@@ -276,6 +287,9 @@ def shows(request):
     results = []
     for item in data.get('results', []):
         # Get additional details for each item
+        if adult_content := item.get('adult', False):
+            # Skip adult content
+            continue
         processed_item = {
             'id': item.get('id'),
             'title': item.get('title') if media_type == 'movie' else item.get('name'),
@@ -292,7 +306,6 @@ def shows(request):
         'query': query,
         'category': category,
         'genre': genre,
-        'description': description,
         'current_page': int(page),
         'total_pages': total_pages,
         'has_next': int(page) < total_pages,
