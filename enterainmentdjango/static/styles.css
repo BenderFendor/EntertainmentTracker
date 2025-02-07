@@ -411,8 +411,8 @@ footer {
 }
 
 .movie-item h2 {
+    bottom: 0px;
     position: absolute;
-    bottom: 40px; /* Space for the more-info button */
     left: 0;
     right: 0;
     padding: 15px;
@@ -423,28 +423,6 @@ footer {
     font-size: 20px;
     text-align: center;
     z-index: 2;
-}
-
-.more-info-btn {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 10px;
-    background-color: var(--bg-transparent);
-    color: var(--text-color);
-    border: none;
-    cursor: pointer;
-    font-size: 18px;
-    text-align: center;
-    text-decoration: none;
-    font-family: "Passion One", sans-serif;
-    z-index: 2;
-    transition: background-color 0.3s ease;
-}
-
-.more-info-btn:hover {
-    background-color: var(--button-hover-color);
 }
 
 .add-to-watchlist {
@@ -491,16 +469,6 @@ footer {
     box-shadow: 
         0 0 30px rgba(86, 137, 208, 0.3),
         0 0 60px rgba(86, 137, 208, 0.2);
-}
-
-.movie-item h2 {
-    font-size: 20px;
-    padding: 10px;
-    text-align: center;
-    color: var(--text-color);
-    font-weight: 800;
-    font-family: "League Spartan", sans-serif;
-    text-shadow: 4px 4px rgba(0, 0, 0, 0.2);
 }
 
 .movie-image-container {

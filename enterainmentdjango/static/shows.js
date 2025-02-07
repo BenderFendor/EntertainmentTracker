@@ -257,7 +257,13 @@ function showsApp() {
                         requestAnimationFrame(() => {
                             const movieList = this.$refs.movieList;
                             if (movieList && doc.querySelector('.movie-list')) {
-                                movieList.innerHTML = doc.querySelector('.movie-list').innerHTML;
+                                // Get the new movie items
+                                const newMovies = doc.querySelector('.movie-list').children;
+
+                                // Append each new item to the existing list
+                                Array.from(newMovies).forEach(movie => {
+                                    movieList.appendChild(movie);
+                                });
                                 this.setupLazyLoading();
                             }
                         });
@@ -318,7 +324,10 @@ function showsApp() {
                     const newItemCount = newMovies.children.length;
                     console.log(`➕ Adding ${newItemCount} new items to the list`);
                     
-                    movieList.insertAdjacentHTML('beforeend', newMovies.innerHTML);
+                    // Append each new item to the existing list
+                    Array.from(newMovies.children).forEach(movie => {
+                        movieList.appendChild(movie);
+                    });
                     this.page = nextPage;
                     this.setupLazyLoading();
                     

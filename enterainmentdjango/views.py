@@ -287,7 +287,8 @@ def shows(request):
     results = []
     for item in data.get('results', []):
         # Get additional details for each item
-        if adult_content := item.get('adult', False):
+        adult_content = item.get('adult', False)
+        if adult_content:
             # Skip adult content
             continue
         processed_item = {

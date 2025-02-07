@@ -120,14 +120,14 @@
                             </button>
                             
                             {% if item.poster_path %}
-                                <img src="https://image.tmdb.org/t/p/w500{{ item.poster_path }}" alt="{{ item.title }} Poster">
+                                <a href="{% url 'movie_detail' media_type=item.media_type show_id=item.id %}">
+                                    <img src="https://image.tmdb.org/t/p/w500{{ item.poster_path }}" alt="{{ item.title }} Poster">
+                                </a>
                             {% else %}
                                 <img src="{% static 'noimage.jpg' %}" alt="No Image Available">
                             {% endif %}
                         </div>
                         <h2>{{ item.title }} ({{ item.release_date|slice:":4" }})</h2>
-                        <a href="{% url 'movie_detail' media_type=item.media_type show_id=item.id %}" class="more-info-btn">More info</a>
-
                     </div>
                 {% endfor %}
             </div>
